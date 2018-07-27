@@ -1,7 +1,9 @@
 #pragma once
 #include <array>
 
+
 using std::array;
+
 
 // four point, fourth-order b-spline polyblep, from:
 // Välimäki, Pekonen, Nam. "Perceptually informed synthesis
