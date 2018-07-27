@@ -13,5 +13,3 @@ The OCTAVE, COARSE, and FINE knobs change the oscillator frequency, which is C4 
 The V/OCT input is the master pitch input. The EXP input is for exponential frequency modulation and has a dedicated attenuverter. Similarly, the LIN input is for through-zero linear frequency modulation and also has a dedicated attenuverter. The RESET input restarts each waveform output at the beginning of its cycle upon recieving a trigger. The reset is not antialiased.
 
 There are five outputs. The SQR and TRI outputs are pitched an octave below, as is the SUB output which is a sine wave.
-
-NOTE: The triangle and square waves alias pretty badly if they go above 11khz, i.e. if the saw/sin outputs go above Nyquist. Working on a fix for this, as well as better sample rate handling
