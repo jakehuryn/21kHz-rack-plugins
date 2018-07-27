@@ -1,5 +1,6 @@
 #include "21kHz.hpp"
 #include "dsp/digital.hpp"
+#include "dsp/math.hpp"
 #include <array>
 
 
@@ -38,15 +39,20 @@ struct PalmLoop : Module {
     float oldPhase = 0.0f;
     float square = 1.0f;
     
-    array<float, 4> buffer;
+    int discont = 0;
+    int oldDiscont = 0;
+    
+    array<float, 4> sawBuffer;
     array<float, 4> sqrBuffer;
     array<float, 4> triBuffer;
-    array<int, 4> discont;
+    
+    float log2sampleFreq = 15.4284f;
     
     SchmittTrigger resetTrigger;
 
 	PalmLoop() : Module(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS) {}
 	void step() override;
+    void onSampleRateChange() override;
 
 	// For more advanced Module features, read Rack's engine.hpp header file
 	// - toJson, fromJson: serialization of internal data
@@ -54,98 +60,50 @@ struct PalmLoop : Module {
 	// - onReset, onRandomize, onCreate, onDelete: implements special behavior when user clicks these from the context menu
 };
 
-void polyblep(array<float, 4> &buffer, float d, float u) {
-    if (d > 1.0f) {
-        d = 1.0f;
-    }
-    else if (d < 0.0f) {
-        d = 0.0f;
-    }
-    
-    float d2 = d * d;
-    float d3 = d2 * d;
-    float d4 = d3 * d;
-    float dd3 = 0.16667 * (d + d3);
-    float cd2 = 0.041667 + 0.25 * d2;
-    float d4_1 = 0.041667 * d4;
-    
-    buffer[3] += u * (d4_1);
-    buffer[2] += u * (cd2 + dd3 - 0.125 * d4);
-    buffer[1] += u * (-0.5 + 0.66667 * d - 0.33333 * d3 + 0.125 * d4);
-    buffer[0] += u * (-cd2 + dd3 - d4_1);
+
+void PalmLoop::onSampleRateChange() {
+    log2sampleFreq = log2f(1 / engineGetSampleTime()) - 0.00009f;
 }
 
-void polyblamp(array<float, 4> &buffer, float d, float u) {
-    if (d > 1.0f) {
-        d = 1.0f;
-    }
-    else if (d < 0.0f) {
-        d = 0.0f;
-    }
-    
-    float d2 = d * d;
-    float d3 = d2 * d;
-    float d4 = d3 * d;
-    float d5 = d4 * d;
-    float d5_1 = 0.0083333 * d5;
-    float d5_2 = 0.025 * d5;
-    
-    buffer[3] += u * (d5_1);
-    buffer[2] += u * (0.0083333 + 0.083333 * (d2 + d3) + 0.041667 * (d + d4) - d5_2);
-    buffer[1] += u * (0.23333 - 0.5 * d + 0.33333 * d2 - 0.083333 * d4 + d5_2);
-    buffer[0] += u * (0.0083333 + 0.041667 * (d4 - d) + 0.083333 * (d2 - d3) - d5_1);
-}
 
-float sin_01(float t) {
-    if (t > 1.0f) {
-        t = 1.0f;
-    }
-    else if (t > 0.5) {
-        t = 1.0f - t;
-    }
-    else if (t < 0.0f) {
-        t = 0.0f;
-    }
-    t = 2.0f * t - 0.5f;
-    float t2 = t * t;
-    t = (((-0.540347 * t2 + 2.53566) * t2 - 5.16651) * t2 + 3.14159) * t;
-    return t;
-}
-
+// quick explanation: the whole thing is driven by a naive sawtooth, which writes to a four-sample buffer for each
+// (non-sine) waveform. the waves are calculated such that their discontinuities (or in the case of triangle, derivative
+// discontinuities) only occur each time the phasor exceeds a [0, 1) range. when we calculate the outputs, we look to see
+// if a discontinuity occured in the previous sample. if one did, we calculate the polyblep or polyblamp and add it to
+// each sample in the buffer. the output is the oldest buffer sample, which gets overwritten in the following step.
 void PalmLoop::step() {
     if (resetTrigger.process(inputs[RESET_INPUT].value)) {
         phase = 0.0f;
     }
     
-    if (outputs[SAW_OUTPUT].active || outputs[SQR_OUTPUT].active || outputs[TRI_OUTPUT].active) {
-        for (int i = 0; i <= 2; ++i) {
-            buffer[i] = buffer[i + 1];
-            sqrBuffer[i] = sqrBuffer[i + 1];
-            triBuffer[i] = triBuffer[i + 1];
-            discont[i] = discont[i + 1];
-        }
+    // advance each buffer
+    for (int i = 0; i <= 2; ++i) {
+        sawBuffer[i] = sawBuffer[i + 1];
+        sqrBuffer[i] = sqrBuffer[i + 1];
+        triBuffer[i] = triBuffer[i + 1];
     }
     
+    // frequency calculation
     float freq = int(params[OCT_PARAM].value) + 0.031360 + 0.083333 * int(params[COARSE_PARAM].value) + params[FINE_PARAM].value + inputs[V_OCT_INPUT].value;
-    
     if (inputs[EXP_FM_INPUT].active) {
         freq += params[EXP_FM_PARAM].value * inputs[EXP_FM_INPUT].value;
-        if (freq >= 15.42f) {
-            freq = 15.42f;
+        // keep frequency below sample frequency
+        if (freq >= log2sampleFreq) {
+            freq = log2sampleFreq;
         }
         freq = powf(2.0f, freq);
     }
     else {
-        if (freq >= 15.42f) {
-            freq = 15.42f;
+        if (freq >= log2sampleFreq) {
+            freq = log2sampleFreq;
         }
         freq = powf(2.0f, freq);
     }
-    
     float incr = 0.0f;
     if (inputs[LIN_FM_INPUT].active) {
         freq += params[LIN_FM_PARAM].value * inputs[LIN_FM_INPUT].value;
         incr = engineGetSampleTime() * freq;
+        // keep absolute value of frequency below sample frequency
         if (incr > 1.0f) {
             incr = 1.0f;
         }
@@ -157,63 +115,92 @@ void PalmLoop::step() {
         incr = engineGetSampleTime() * freq;
     }
     
+    // phase is the naive sawtooth
     phase += incr;
     if (phase >= 0.0f && phase < 1.0f) {
-        discont[3] = 0;
+        discont = 0;
     }
     else if (phase >= 1.0f) {
-        discont[3] = 1;
+        discont = 1;
         --phase;
+        // square changes sign at each phase reset, so it is an octave lower,
+        // as are triangle and sub
         square *= -1.0f;
     }
     else {
-        discont[3] = 2;
+        discont = -1;
         ++phase;
         square *= -1.0f;
     }
-    buffer[3] = phase;
+    
+    // write to buffers
+    sawBuffer[3] = phase;
     sqrBuffer[3] = square;
     if (square >= 0.0f) {
+        // triangle is just the saw but flipped every other cycle
         triBuffer[3] = phase;
     }
     else {
         triBuffer[3] = 1.0f - phase;
     }
     
+    // calculate outputs
     if (outputs[SAW_OUTPUT].active) {
-        if (discont[2] == 1) {
-            polyblep(buffer, 1.0f - oldPhase / incr, 1.0f);
+        if (oldDiscont == 1) {
+            polyblep4(sawBuffer, 1.0f - oldPhase / incr, 1.0f);
         }
-        else if (discont[2] == 2) {
-            polyblep(buffer, 1.0f - (oldPhase - 1.0f) / incr, -1.0f);
+        // oldDiscont = -1 means the waveform was going backwards (negative frequency),
+        // so we invert the polyblep.
+        else if (oldDiscont == -1) {
+            polyblep4(sawBuffer, 1.0f - (oldPhase - 1.0f) / incr, -1.0f);
         }
-        outputs[SAW_OUTPUT].value = clampf(10.0f * (buffer[0] - 0.5f), -5.0f, 5.0f);
+        outputs[SAW_OUTPUT].value = clampf(10.0f * (sawBuffer[0] - 0.5f), -5.0f, 5.0f);
     }
-    
     if (outputs[SQR_OUTPUT].active) {
-        if (discont[2] == 1) {
-            polyblep(sqrBuffer, 1.0f - oldPhase / incr, -2.0f * square);
+        // for some reason i don't understand, if discontinuities happen in two
+        // adjacent samples, the first one must be inverted. otherwise the polyblep
+        // is bad and causes aliasing. don't ask me how i managed to figure this out.
+        if (discont == 0) {
+            if (oldDiscont == 1) {
+                polyblep4(sqrBuffer, 1.0f - oldPhase / incr, -2.0f * square);
+            }
+            else if (oldDiscont == -1) {
+                polyblep4(sqrBuffer, 1.0f - (oldPhase - 1.0f) / incr, -2.0f * square);
+            }
         }
-        else if (discont[2] == 2) {
-            polyblep(sqrBuffer, 1.0f - (oldPhase - 1.0f) / incr, -2.0f * square);
+        else {
+            if (oldDiscont == 1) {
+                polyblep4(sqrBuffer, 1.0f - oldPhase / incr, 2.0f * square);
+            }
+            else if (oldDiscont == -1) {
+                polyblep4(sqrBuffer, 1.0f - (oldPhase - 1.0f) / incr, 2.0f * square);
+            }
         }
         outputs[SQR_OUTPUT].value = clampf(4.9999f * sqrBuffer[0], -5.0f, 5.0f);
     }
-    
     if (outputs[TRI_OUTPUT].active) {
-        if (discont[2] == 1) {
-            polyblamp(triBuffer, 1.0f - oldPhase / incr, 2.0f * square * incr);
+        // same as above goes for triangle, apparently.
+        if (discont == 0) {
+            if (oldDiscont == 1) {
+                polyblamp4(triBuffer, 1.0f - oldPhase / incr, 2.0f * square * incr);
+            }
+            else if (oldDiscont == -1) {
+                polyblamp4(triBuffer, 1.0f - (oldPhase - 1.0f) / incr, 2.0f * square * incr);
+            }
         }
-        else if (discont[2] == 2) {
-            polyblamp(triBuffer, 1.0f - (oldPhase - 1.0f) / incr, 2.0f * square * incr);
+        else {
+            if (oldDiscont == 1) {
+                polyblamp4(triBuffer, 1.0f - oldPhase / incr, -2.0f * square * incr);
+            }
+            else if (oldDiscont == -1) {
+                polyblamp4(triBuffer, 1.0f - (oldPhase - 1.0f) / incr, -2.0f * square * incr);
+            }
         }
         outputs[TRI_OUTPUT].value = clampf(10.0f * (triBuffer[0] - 0.5f), -5.0f, 5.0f);
     }
-    
     if (outputs[SIN_OUTPUT].active) {
         outputs[SIN_OUTPUT].value = 5.0f * sin_01(phase);
     }
-    
     if (outputs[SUB_OUTPUT].active) {
         if (square >= 0.0f) {
             outputs[SUB_OUTPUT].value = 5.0f * sin_01(0.5f * phase);
@@ -223,7 +210,12 @@ void PalmLoop::step() {
         }
     }
     
+    // we are looking for discontinuities in the previous sample.
+    // oldDiscont tells us whether the previous sample's discontinuity was
+    // positive or negative, and oldPhase allow us to calculate the
+    // discontinuity's fractional delay.
     oldPhase = phase;
+    oldDiscont = discont;
 }
 
 
