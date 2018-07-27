@@ -30,6 +30,7 @@ void polyblep4(array<float, 4> &buffer, float d, float u) {
     buffer[0] += u * (-cd2 + dd3 - d4_1);
 }
 
+
 // four point, fourth-order b-spline polyblamp, from:
 // Esqueda, Välimäki, Bilbao. "Rounding Corners with BLAMP".
 void polyblamp4(array<float, 4> &buffer, float d, float u) {
