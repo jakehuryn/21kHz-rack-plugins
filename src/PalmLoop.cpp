@@ -84,7 +84,8 @@ void PalmLoop::step() {
     }
     
     // frequency calculation
-    float freq = int(params[OCT_PARAM].value) + 0.031360 + 0.083333 * int(params[COARSE_PARAM].value) + params[FINE_PARAM].value + inputs[V_OCT_INPUT].value;
+    float freq = params[OCT_PARAM].value + 0.031360 + 0.083333 * params[COARSE_PARAM].value
+                    + params[FINE_PARAM].value + inputs[V_OCT_INPUT].value;
     if (inputs[EXP_FM_INPUT].active) {
         freq += params[EXP_FM_PARAM].value * inputs[EXP_FM_INPUT].value;
         // keep frequency below sample frequency
@@ -210,10 +211,9 @@ void PalmLoop::step() {
         }
     }
     
-    // we are looking for discontinuities in the previous sample.
-    // oldDiscont tells us whether the previous sample's discontinuity was
-    // positive or negative, and oldPhase allow us to calculate the
-    // discontinuity's fractional delay.
+    // we are looking for discontinuities in the previous sample. oldDiscont tells us whether
+    // the previous sample's discontinuity was positive or negative, and oldPhase allow us to
+    // calculate the discontinuity's fractional delay.
     oldPhase = phase;
     oldDiscont = discont;
 }
