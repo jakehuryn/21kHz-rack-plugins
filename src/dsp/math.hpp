@@ -56,7 +56,8 @@ void polyblamp4(array<float, 4> &buffer, float d, float u) {
 
 
 // fast sine calculation. modified from the Reaktor 6
-// core library. takes a triangle on a [0, 0.5] range.
+// core library. takes a [0, 1] range and folds it to
+// a triangle on a [0, 0.5] range.
 float sin_01(float t) {
     if (t > 1.0f) {
         t = 1.0f;
