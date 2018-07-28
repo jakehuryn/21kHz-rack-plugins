@@ -15,7 +15,7 @@ The V/OCT input is the master pitch input. The EXP input is for exponential freq
 There are five outputs. The SQR and TRI outputs are pitched an octave below, as is the SUB output which is a sine wave.
 
 **Tips**
-- Since there's not much in the way of waveshaping, Palm Loop shines when doing FM, perhaps paired with a second one. 
+- Since there's not much in the way of waveshaping, Palm Loop shines when doing FM, perhaps paired with a second. 
 - The LIN input is for the classic glassy FM harmonics; use the EXP input for harsh inharmonic timbres.
 - If you have one modulating another, RESET both on the same trigger to keep the timbre consistent across pitch changes.
 - Mix or scan the outputs for varied waveshapes.
