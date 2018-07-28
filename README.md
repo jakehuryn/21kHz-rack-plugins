@@ -13,3 +13,5 @@ The OCTAVE, COARSE, and FINE knobs change the oscillator frequency, which is C4 
 The V/OCT input is the master pitch input. The EXP input is for exponential frequency modulation and has a dedicated attenuverter. Similarly, the LIN input is for through-zero linear frequency modulation and also has a dedicated attenuverter. The RESET input restarts each waveform output at the beginning of its cycle upon recieving a trigger. The reset is not antialiased.
 
 There are five outputs. The SQR and TRI outputs are pitched an octave below, as is the SUB output which is a sine wave.
+
+Tips: Since there's not much in the way of waveshaping, Palm Loop works shines when doing FM, perhaps paired with a second one. The LIN input is for the classic glassy FM harmonics. Use the EXP input for harsh inharmonic timbres. If you have one modulating another, RESET both on the same trigger to keep the timbre consistent across pitch changes. Mix or scan the outputs for varied waveshapes.
