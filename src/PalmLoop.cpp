@@ -101,7 +101,7 @@ void PalmLoop::step() {
     }
     float incr = 0.0f;
     if (inputs[LIN_FM_INPUT].active) {
-        freq += params[LIN_FM_PARAM].value * inputs[LIN_FM_INPUT].value;
+        freq += params[LIN_FM_PARAM].value * params[LIN_FM_PARAM].value * inputs[LIN_FM_INPUT].value;
         incr = engineGetSampleTime() * freq;
         // keep absolute value of frequency below sample frequency
         if (incr > 1.0f) {
@@ -233,7 +233,7 @@ struct PalmLoopWidget : ModuleWidget {
         addParam(ParamWidget::create<kHzKnobSmall>(Vec(72, 112), module, PalmLoop::FINE_PARAM, -0.083333, 0.083333, 0.0));
         
         addParam(ParamWidget::create<kHzKnobSmall>(Vec(16, 168), module, PalmLoop::EXP_FM_PARAM, -1.0, 1.0, 0.0));
-        addParam(ParamWidget::create<kHzKnobSmall>(Vec(72, 168), module, PalmLoop::LIN_FM_PARAM, -400.0, 400.0, 0.0));
+        addParam(ParamWidget::create<kHzKnobSmall>(Vec(72, 168), module, PalmLoop::LIN_FM_PARAM, -40.0, 40.0, 0.0));
         
         addInput(Port::create<kHzPort>(Vec(10, 234), Port::INPUT, module, PalmLoop::EXP_FM_INPUT));
         addInput(Port::create<kHzPort>(Vec(47, 234), Port::INPUT, module, PalmLoop::V_OCT_INPUT));
