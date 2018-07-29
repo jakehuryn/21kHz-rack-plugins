@@ -1,10 +1,10 @@
 # 21kHz 0.6.0
 
-A couple of modules I made for [VCVRack](https://vcvrack.com/). More to come. The following is a list of and documentation for each module in the plugin.
+A couple of modules I made for [VCVRack](https://vcvrack.com/). More to come. The following is a list of and documentation for each module in the plugin. Also, I've linked to some audio demos next to the section title of each module.
 
 <img src="docs/PalmLoop.png" alt="drawing" height="420px"/>
 
-## Palm Loop
+## Palm Loop ([Audio Demo](https://clyp.it/d5zatc4a))
 
 Palm Loop is a basic and CPU-friendly VCO, implementing through-zero FM and polyBLEP and polyBLAMP antialiasing.
 
