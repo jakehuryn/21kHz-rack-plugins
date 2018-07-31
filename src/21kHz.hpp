@@ -8,6 +8,7 @@ extern Plugin *plugin;
 
 // Forward-declare each Model, defined in each module source file
 extern Model *modelPalmLoop;
+extern Model *modelD_Inf;
 
 ////////////////////////////////
 
@@ -36,6 +37,15 @@ struct kHzKnobSnap : kHzKnob {
 struct kHzKnobSmallSnap : kHzKnobSmall {
     kHzKnobSmallSnap() {
         snap = true;
+    }
+};
+
+// Buttons
+
+struct kHzButton : SVGSwitch, ToggleSwitch {
+    kHzButton() {
+        addFrame(SVG::load(assetPlugin(plugin, "res/Components/kHzButton_0.svg")));
+        addFrame(SVG::load(assetPlugin(plugin, "res/Components/kHzButton_1.svg")));
     }
 };
         
