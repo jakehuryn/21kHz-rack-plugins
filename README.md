@@ -23,6 +23,6 @@ There are five outputs. The SQR and TRI outputs are pitched an octave below, as 
 
 <img src="docs/D_Inf.png" alt="drawing" height="420px"/>
 
-## D_∞
+## *D*<sub>∞</sub>
 
 coming soon
