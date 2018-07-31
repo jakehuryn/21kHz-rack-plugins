@@ -76,18 +76,15 @@ void PalmLoop::step() {
         phase = 0.0f;
     }
     
-    // advance each buffer
     for (int i = 0; i <= 2; ++i) {
         sawBuffer[i] = sawBuffer[i + 1];
         sqrBuffer[i] = sqrBuffer[i + 1];
         triBuffer[i] = triBuffer[i + 1];
     }
     
-    // frequency calculation
     float freq = params[OCT_PARAM].value + 0.031360 + 0.083333 * params[COARSE_PARAM].value + params[FINE_PARAM].value + inputs[V_OCT_INPUT].value;
     if (inputs[EXP_FM_INPUT].active) {
         freq += params[EXP_FM_PARAM].value * inputs[EXP_FM_INPUT].value;
-        // keep frequency below sample frequency
         if (freq >= log2sampleFreq) {
             freq = log2sampleFreq;
         }
@@ -103,7 +100,6 @@ void PalmLoop::step() {
     if (inputs[LIN_FM_INPUT].active) {
         freq += params[LIN_FM_PARAM].value * params[LIN_FM_PARAM].value * inputs[LIN_FM_INPUT].value;
         incr = engineGetSampleTime() * freq;
-        // keep absolute value of frequency below sample frequency
         if (incr > 1.0f) {
             incr = 1.0f;
         }
@@ -115,7 +111,6 @@ void PalmLoop::step() {
         incr = engineGetSampleTime() * freq;
     }
     
-    // phase is the naive sawtooth
     phase += incr;
     if (phase >= 0.0f && phase < 1.0f) {
         discont = 0;
@@ -123,8 +118,6 @@ void PalmLoop::step() {
     else if (phase >= 1.0f) {
         discont = 1;
         --phase;
-        // square changes sign at each phase reset, so it is an octave lower,
-        // as are triangle and sub
         square *= -1.0f;
     }
     else {
@@ -133,24 +126,19 @@ void PalmLoop::step() {
         square *= -1.0f;
     }
     
-    // write to buffers
     sawBuffer[3] = phase;
     sqrBuffer[3] = square;
     if (square >= 0.0f) {
-        // triangle is just the saw but flipped every other cycle
         triBuffer[3] = phase;
     }
     else {
         triBuffer[3] = 1.0f - phase;
     }
     
-    // calculate outputs
     if (outputs[SAW_OUTPUT].active) {
         if (oldDiscont == 1) {
             polyblep4(sawBuffer, 1.0f - oldPhase / incr, 1.0f);
         }
-        // oldDiscont = -1 means the waveform was going backwards (negative frequency),
-        // so we invert the polyblep.
         else if (oldDiscont == -1) {
             polyblep4(sawBuffer, 1.0f - (oldPhase - 1.0f) / incr, -1.0f);
         }
@@ -179,7 +167,6 @@ void PalmLoop::step() {
         outputs[SQR_OUTPUT].value = clampf(4.9999f * sqrBuffer[0], -5.0f, 5.0f);
     }
     if (outputs[TRI_OUTPUT].active) {
-        // same as above goes for triangle, apparently.
         if (discont == 0) {
             if (oldDiscont == 1) {
                 polyblamp4(triBuffer, 1.0f - oldPhase / incr, 2.0f * square * incr);
@@ -210,9 +197,6 @@ void PalmLoop::step() {
         }
     }
     
-    // we are looking for discontinuities in the previous sample. oldDiscont tells us whether
-    // the previous sample's discontinuity was positive or negative, and oldPhase allow us to
-    // calculate the discontinuity's fractional delay.
     oldPhase = phase;
     oldDiscont = discont;
 }
