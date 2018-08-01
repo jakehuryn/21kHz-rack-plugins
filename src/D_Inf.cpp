@@ -106,3 +106,8 @@ struct D_InfWidget : ModuleWidget {
 // change), human-readable module name, and any number of tags
 // (found in `include/tags.hpp`) separated by commas.
 Model *modelD_Inf = Model::create<D_Inf, D_InfWidget>("21kHz", "kHzD_Inf", "D∞ — pitch tools — 4hp");
+
+
+// history
+// 0.6.1
+//	create
