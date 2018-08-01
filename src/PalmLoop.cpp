@@ -240,3 +240,11 @@ struct PalmLoopWidget : ModuleWidget {
 // change), human-readable module name, and any number of tags
 // (found in `include/tags.hpp`) separated by commas.
 Model *modelPalmLoop = Model::create<PalmLoop, PalmLoopWidget>("21kHz", "kHzPalmLoop", "Palm Loop — basic VCO — 8hp", OSCILLATOR_TAG);
+
+// history
+// 0.6.0
+//	create
+// 0.6.1
+//	minor optimizations
+//	coarse goes -7 to +7
+//	waveform labels & rearrangement on panel
