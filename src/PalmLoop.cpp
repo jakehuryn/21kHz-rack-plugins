@@ -211,9 +211,9 @@ struct PalmLoopWidget : ModuleWidget {
 		addChild(Widget::create<kHzScrew>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
         addChild(Widget::create<kHzScrew>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 
-        addParam(ParamWidget::create<kHzKnobSnap>(Vec(36, 40), module, PalmLoop::OCT_PARAM, 4.0, 12.0, 8.0));
+        addParam(ParamWidget::create<kHzKnobSnap>(Vec(36, 40), module, PalmLoop::OCT_PARAM, 4, 12, 8));
         
-        addParam(ParamWidget::create<kHzKnobSmallSnap>(Vec(16, 112), module, PalmLoop::COARSE_PARAM, 0.0, 12.0, 0.0));
+        addParam(ParamWidget::create<kHzKnobSmallSnap>(Vec(16, 112), module, PalmLoop::COARSE_PARAM, -7, 7, 0));
         addParam(ParamWidget::create<kHzKnobSmall>(Vec(72, 112), module, PalmLoop::FINE_PARAM, -0.083333, 0.083333, 0.0));
         
         addParam(ParamWidget::create<kHzKnobSmall>(Vec(16, 168), module, PalmLoop::EXP_FM_PARAM, -1.0, 1.0, 0.0));
@@ -224,11 +224,11 @@ struct PalmLoopWidget : ModuleWidget {
         addInput(Port::create<kHzPort>(Vec(84, 234), Port::INPUT, module, PalmLoop::LIN_FM_INPUT));
         
         addInput(Port::create<kHzPort>(Vec(10, 276), Port::INPUT, module, PalmLoop::RESET_INPUT));
-        addOutput(Port::create<kHzPort>(Vec(47, 276), Port::OUTPUT, module, PalmLoop::SQR_OUTPUT));
-        addOutput(Port::create<kHzPort>(Vec(84, 276), Port::OUTPUT, module, PalmLoop::TRI_OUTPUT));
+        addOutput(Port::create<kHzPort>(Vec(47, 276), Port::OUTPUT, module, PalmLoop::SAW_OUTPUT));
+        addOutput(Port::create<kHzPort>(Vec(84, 276), Port::OUTPUT, module, PalmLoop::SIN_OUTPUT));
         
-        addOutput(Port::create<kHzPort>(Vec(10, 318), Port::OUTPUT, module, PalmLoop::SAW_OUTPUT));
-        addOutput(Port::create<kHzPort>(Vec(47, 318), Port::OUTPUT, module, PalmLoop::SIN_OUTPUT));
+        addOutput(Port::create<kHzPort>(Vec(10, 318), Port::OUTPUT, module, PalmLoop::SQR_OUTPUT));
+        addOutput(Port::create<kHzPort>(Vec(47, 318), Port::OUTPUT, module, PalmLoop::TRI_OUTPUT));
         addOutput(Port::create<kHzPort>(Vec(84, 318), Port::OUTPUT, module, PalmLoop::SUB_OUTPUT));
         
 	}
