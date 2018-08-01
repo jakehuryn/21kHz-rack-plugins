@@ -2,7 +2,7 @@
 
 A couple of modules I made for [VCVRack](https://vcvrack.com/). More to come. The following is a list of and documentation for each module in the plugin. Also, I've linked to some audio demos next to the section title of each module.
 
-<img src="docs/PalmLoop.png" alt="drawing" height="420px"/>
+<img src="docs/pl.png" alt="drawing" height="420px"/>
 
 ## Palm Loop ([Audio Demo](https://clyp.it/d5zatc4a))
 
@@ -21,7 +21,7 @@ There are five outputs. The SQR and TRI outputs are pitched an octave below, as 
 - Mix or scan the outputs for varied waveshapes.
 
 
-<img src="docs/D_Inf.png" alt="drawing" height="420px"/>
+<img src="docs/d.png" alt="drawing" height="420px"/>
 
 ## *D*<sub>∞</sub>
 
