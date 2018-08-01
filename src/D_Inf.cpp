@@ -4,40 +4,33 @@
 
 struct D_Inf : Module {
 	enum ParamIds {
-        INVERT_OCTAVE_PARAM,
-        INVERT_COARSE_PARAM,
-        INVERT_SWITCH_PARAM,
+        OCTAVE_PARAM,
+        COARSE_PARAM,
         HALF_SHARP_PARAM,
-        TRANSPOSE_OCTAVE_PARAM,
-        TRANSPOSE_COARSE_PARAM,
-        TRANSPOSE_SWITCH_PARAM,
-        SWITCH_BUS_PARAM,
+        INVERT_PARAM,
+        GATE_PARAM,
+        INVERT_TRIG_PARAM,
 		NUM_PARAMS
 	};
 	enum InputIds {
-        INVERT_INPUT,
-        INVERT_SWITCH_INPUT,
-        TRANSPOSE_INPUT,
-        TRANSPOSE_SWITCH_INPUT,
+        TRIG_INPUT,
+        A_INPUT,
 		NUM_INPUTS
 	};
 	enum OutputIds {
-        TRANSPOSE_OUTPUT,
-        INVERT_OUTPUT,
+        A_OUTPUT,
 		NUM_OUTPUTS
 	};
 	enum LightIds {
 		NUM_LIGHTS
 	};
+    
+    bool transpose = true;
+    
+    SchmittTrigger transposeTrigger;
 
 	D_Inf() : Module(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS) {}
 	void step() override;
-    
-    SchmittTrigger invertTrigger;
-    SchmittTrigger transposeTrigger;
-    
-    bool invert = true;
-    bool transpose = true;
 
 	// For more advanced Module features, read Rack's engine.hpp header file
 	// - toJson, fromJson: serialization of internal data
@@ -46,55 +39,42 @@ struct D_Inf : Module {
 };
 
 
-void transformState(Input &input, Param &param, bool &state, SchmittTrigger &trigger) {
-    if (!input.active) {
-        state = true;
+void D_Inf::step() {
+    if (!inputs[TRIG_INPUT].active) {
+        transpose = true;
     }
     else {
-        if (param.value == 0) {
-            if (trigger.process(input.value)) {
-                state = !state;
+        if (params[GATE_PARAM].value == 0) {
+            if (transposeTrigger.process(inputs[TRIG_INPUT].value)) {
+                transpose = !transpose;
             }
         }
         else {
-            if (input.value <= 4.9f) {
-                state = false;
+            if (inputs[TRIG_INPUT].value >= 0.49) {
+                transpose = true;
             }
             else {
-                state = true;
+                transpose = false;
             }
         }
     }
-}
-
-
-void D_Inf::step() {
-    transformState(inputs[INVERT_SWITCH_INPUT], params[INVERT_SWITCH_PARAM], invert, invertTrigger);
-    if (SWITCH_BUS_PARAM == 1) {
-        transpose = invert;
+    
+    float output = inputs[A_INPUT].value;
+    if (transpose) {
+        if (params[INVERT_PARAM].value == 1) {
+            output *= -1;
+        }
+        output += params[OCTAVE_PARAM].value + 0.083333 * params[COARSE_PARAM].value + 0.041667 * params[HALF_SHARP_PARAM].value;
     }
     else {
-        transformState(inputs[TRANSPOSE_SWITCH_INPUT], params[TRANSPOSE_SWITCH_PARAM], transpose, transposeTrigger);
+        if (params[INVERT_TRIG_PARAM].value == 0) {
+            if (params[INVERT_PARAM].value == 1) {
+                output *= -1;
+            }
+        }
     }
     
-    float invertOutput = inputs[INVERT_INPUT].value;
-    if (invert && inputs[INVERT_INPUT].active) {
-        float axis = params[INVERT_OCTAVE_PARAM].value + 0.083333 * params[INVERT_COARSE_PARAM].value + 0.041667 * params[HALF_SHARP_PARAM].value;
-        invertOutput = 2 * axis - inputs[INVERT_INPUT].value;
-    }
-    outputs[INVERT_OUTPUT].value = invertOutput;
-    
-    float transposeOutput;
-    if (inputs[TRANSPOSE_INPUT].active) {
-        transposeOutput = inputs[TRANSPOSE_INPUT].value;
-    }
-    else {
-        transposeOutput = invertOutput;
-    }
-    if (transpose && outputs[TRANSPOSE_OUTPUT].active) {
-        transposeOutput += params[TRANSPOSE_OCTAVE_PARAM].value + 0.083333 * params[TRANSPOSE_COARSE_PARAM].value;
-    }
-    outputs[TRANSPOSE_OUTPUT].value = transposeOutput;
+    outputs[A_OUTPUT].value = output;
 }
 
 
@@ -103,27 +83,20 @@ struct D_InfWidget : ModuleWidget {
 		setPanel(SVG::load(assetPlugin(plugin, "res/Panels/D_Inf.svg")));
 
         addChild(Widget::create<kHzScrew>(Vec(RACK_GRID_WIDTH, 0)));
-        addChild(Widget::create<kHzScrew>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, 0)));
         addChild(Widget::create<kHzScrew>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
-        addChild(Widget::create<kHzScrew>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
         
-        addParam(ParamWidget::create<kHzKnobSmallSnap>(Vec(16, 58), module, D_Inf::INVERT_OCTAVE_PARAM, -4, 4, 0));
-        addParam(ParamWidget::create<kHzKnobSmallSnap>(Vec(72, 58), module, D_Inf::INVERT_COARSE_PARAM, 0, 12, 0));
-        addParam(ParamWidget::create<kHzButton>(Vec(25, 112), module, D_Inf::INVERT_SWITCH_PARAM, 0, 1, 0));
-        addParam(ParamWidget::create<kHzButton>(Vec(81, 112), module, D_Inf::HALF_SHARP_PARAM, 0, 1, 0));
+        addParam(ParamWidget::create<kHzKnobSmallSnap>(Vec(14, 40), module, D_Inf::OCTAVE_PARAM, -4, 4, 0));
+        addParam(ParamWidget::create<kHzKnobSmallSnap>(Vec(14, 96), module, D_Inf::COARSE_PARAM, -7, 7, 0));
         
-        addParam(ParamWidget::create<kHzKnobSmallSnap>(Vec(16, 176), module, D_Inf::TRANSPOSE_OCTAVE_PARAM, -4, 4, 0));
-        addParam(ParamWidget::create<kHzKnobSmallSnap>(Vec(72, 176), module, D_Inf::TRANSPOSE_COARSE_PARAM, 0, 12, 0));
-        addParam(ParamWidget::create<kHzButton>(Vec(25, 230), module, D_Inf::TRANSPOSE_SWITCH_PARAM, 0, 1, 0));
-        addParam(ParamWidget::create<kHzButton>(Vec(81, 230), module, D_Inf::SWITCH_BUS_PARAM, 0, 1, 0));
+        addParam(ParamWidget::create<kHzButton>(Vec(10, 150), module, D_Inf::HALF_SHARP_PARAM, 0, 1, 0));
+        addParam(ParamWidget::create<kHzButton>(Vec(36, 150), module, D_Inf::INVERT_PARAM, 0, 1, 0));
         
-        addInput(Port::create<kHzPort>(Vec(10, 276), Port::INPUT, module, D_Inf::INVERT_SWITCH_INPUT));
-        addInput(Port::create<kHzPort>(Vec(47, 276), Port::INPUT, module, D_Inf::INVERT_INPUT));
-        addOutput(Port::create<kHzPort>(Vec(84, 276), Port::OUTPUT, module, D_Inf::INVERT_OUTPUT));
+        addParam(ParamWidget::create<kHzButton>(Vec(10, 182), module, D_Inf::GATE_PARAM, 0, 1, 0));
+        addParam(ParamWidget::create<kHzButton>(Vec(36, 182), module, D_Inf::INVERT_TRIG_PARAM, 0, 1, 0));
         
-        addInput(Port::create<kHzPort>(Vec(10, 318), Port::INPUT, module, D_Inf::TRANSPOSE_SWITCH_INPUT));
-        addInput(Port::create<kHzPort>(Vec(47, 318), Port::INPUT, module, D_Inf::TRANSPOSE_INPUT));
-        addOutput(Port::create<kHzPort>(Vec(84, 318), Port::OUTPUT, module, D_Inf::TRANSPOSE_OUTPUT));
+        addInput(Port::create<kHzPort>(Vec(17, 234), Port::INPUT, module, D_Inf::TRIG_INPUT));
+        addInput(Port::create<kHzPort>(Vec(17, 276), Port::INPUT, module, D_Inf::A_INPUT));
+        addOutput(Port::create<kHzPort>(Vec(17, 318), Port::OUTPUT, module, D_Inf::A_OUTPUT));
 	}
 };
 
@@ -132,4 +105,4 @@ struct D_InfWidget : ModuleWidget {
 // author name for categorization per plugin, module slug (should never
 // change), human-readable module name, and any number of tags
 // (found in `include/tags.hpp`) separated by commas.
-Model *modelD_Inf = Model::create<D_Inf, D_InfWidget>("21kHz", "kHzD_Inf", "D∞ — pitch tools — 8hp");
+Model *modelD_Inf = Model::create<D_Inf, D_InfWidget>("21kHz", "kHzD_Inf", "D∞ — pitch tools — 4hp");
