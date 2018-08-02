@@ -50,7 +50,7 @@ void D_Inf::step() {
             }
         }
         else {
-            if (inputs[TRIG_INPUT].value >= 0.49) {
+            if (inputs[TRIG_INPUT].value >= 5.0f) {
                 transpose = true;
             }
             else {
@@ -62,14 +62,14 @@ void D_Inf::step() {
     float output = inputs[A_INPUT].value;
     if (transpose) {
         if (params[INVERT_PARAM].value == 1) {
-            output *= -1;
+            output *= -1.0f;
         }
         output += params[OCTAVE_PARAM].value + 0.083333 * params[COARSE_PARAM].value + 0.041667 * params[HALF_SHARP_PARAM].value;
     }
     else {
         if (params[INVERT_TRIG_PARAM].value == 0) {
             if (params[INVERT_PARAM].value == 1) {
-                output *= -1;
+                output *= -1.0f;
             }
         }
     }
