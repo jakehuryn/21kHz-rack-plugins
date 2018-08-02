@@ -1,4 +1,4 @@
-# 21kHz 0.6.1
+# 21kHz 0.6.1 (Coming soon)
 
 A couple of modules I made for [VCV Rack](https://vcvrack.com/). More to come. The following is a list of and documentation for each module in the plugin. Also, I've linked to audio demos next to the section title of some modules.
 
