@@ -1,4 +1,4 @@
-# 21kHz 0.6.1 (under construction)
+# 21kHz 0.6.1
 
 A couple of modules I made for [VCVRack](https://vcvrack.com/). More to come. The following is a list of and documentation for each module in the plugin. Also, I've linked to some audio demos next to the section title of each module.
 
@@ -8,11 +8,11 @@ A couple of modules I made for [VCVRack](https://vcvrack.com/). More to come. Th
 
 Palm Loop is a basic and CPU-friendly VCO, implementing through-zero FM and polyBLEP and polyBLAMP antialiasing.
 
-The OCTAVE, COARSE, and FINE knobs change the oscillator frequency, which is C4 by default. The OCTAVE knob changes the frequency in octave increments (C0 to C8), the COARSE knob in half-step increments (+0 to +12), and the FINE knob within a continuous +/-1 half-step range.
+The OCTAVE, COARSE, and FINE knobs change the oscillator frequency, which is C4 by default. The OCTAVE knob changes the frequency in octave increments (C0 to C8), the COARSE knob in half-step increments (-7 to +7), and the FINE knob within a continuous +/-1 half-step range.
 
 The V/OCT input is the master pitch input. The EXP input is for exponential frequency modulation and has a dedicated attenuverter. Similarly, the LIN input is for through-zero linear frequency modulation and also has a dedicated attenuverter. The RESET input restarts each waveform output at the beginning of its cycle upon recieving a trigger. The reset is not antialiased.
 
-There are five outputs. The SQR and TRI outputs are pitched an octave below, as is the SUB output which is a sine wave.
+There are five outputs. The top two are saw and sine, and the bottom three are square, triangle, and sine. The bottom three waveforms are pitched an octave below.
 
 **Tips**
 - Since there's not much in the way of waveshaping, Palm Loop shines when doing FM, perhaps paired with a second. 
@@ -20,9 +20,16 @@ There are five outputs. The SQR and TRI outputs are pitched an octave below, as 
 - If you have one modulating another, RESET both on the same trigger to keep the timbre consistent across pitch changes.
 - Mix or scan the outputs for varied waveshapes.
 
-
 <img src="docs/d.png" alt="drawing" height="420px"/>
 
 ## *D*<sub>∞</sub>
 
-coming soon
+A basic module for modifying V/OCT signals by transposition and inversion.
+
+The OCTAVE knob transposes the signal in octave increments (-4 to +4), and the COARSE knob transposes it in half step increments (-7 to +7). The 1/2 # knob raises the transposed signal by a quarter step, so quartertone transpositions can be achieved. When the INV button is on, the incoming signal is inverted about 0V (generally C4) and then transposed.
+
+The rest of the controls determine when the transposition and inversion are done. By default, if there is no input at the TRIG port, the transposition is always active and the inversion active if the INV button is on. With the GATE button off, a trigger at the TRIG input will switch the transposition between on and off. With the GATE button on, the transposition will on activate with a signal of >= 5.0V (generally meant for 0-10V unipolar inputs). Finally, activating the button below INV means that the input will only be inverted when transposition is active (and the INV button is on). Otherwise, this will only ever change with the INV button.
+
+**Tips**
+- Swap between differently transposed sequences with a sequential switch for harmonic movement.
+- Turn on INV and the button below it, and transpose so that the inverted signal is in the same key as the incoming signal. An input at TRIG will create some nice melodic variation, especially if it is offset from the main rhythm.
