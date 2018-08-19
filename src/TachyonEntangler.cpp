@@ -469,7 +469,7 @@ struct TachyonEntanglerWidget : ModuleWidget {
 		addChild(Widget::create<kHzScrew>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
         addChild(Widget::create<kHzScrew>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
         
-        addParam(ParamWidget::create<kHzKnobSnap>(Vec(36, 40), module, TachyonEntangler::A_OCTAVE_PARAM, 0, 16, 8));
+        addParam(ParamWidget::create<kHzKnobSnap>(Vec(36, 40), module, TachyonEntangler::A_OCTAVE_PARAM, 4, 12, 8));
         addParam(ParamWidget::create<kHzKnobSmallSnap>(Vec(134, 112), module, TachyonEntangler::A_COARSE_PARAM, -7, 7, 0));
         addParam(ParamWidget::create<kHzKnobSmall>(Vec(134, 168), module, TachyonEntangler::A_FINE_PARAM, -0.083333, 0.083333, 0.0));
         addParam(ParamWidget::create<kHzKnob>(Vec(216, 40), module, TachyonEntangler::B_RATIO_PARAM, -1.0, 4.0, 0.0));
