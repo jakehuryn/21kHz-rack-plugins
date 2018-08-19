@@ -38,7 +38,7 @@ The rest of the controls determine when the transposition and inversion are done
 
 ## Tachyon Entangler
 
-The Tachyon Entangler is a chaotic sync oscillator, and is at its core two Palm Loop oscillators with chaos, which can be probabilistically cross-synced. By default, oscillator A (left) is the master and oscillator B (right) is the slave.
+The Tachyon Entangler is an antialiased chaotic sync oscillator, and is at its core two Palm Loop oscillators with chaos, which can be probabilistically cross-synced. By default, oscillator A (left) is the master and oscillator B (right) is the slave.
 
 The OCTAVE, COARSE and FINE knobs are master pitch controls for both oscillators and function identically to Palm Loop. The RATIO B knob changes the frequency ratio of oscillator B with respect to the master pitch. Sweeping this gives the classic sync sound.
 
