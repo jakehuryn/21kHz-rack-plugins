@@ -9,6 +9,7 @@ extern Plugin *plugin;
 // Forward-declare each Model, defined in each module source file
 extern Model *modelPalmLoop;
 extern Model *modelD_Inf;
+extern Model *modelTachyonEntangler;
 
 ////////////////////////////////
 
@@ -17,13 +18,20 @@ extern Model *modelD_Inf;
 struct kHzKnob : RoundKnob {
     kHzKnob() {
         setSVG(SVG::load(assetPlugin(plugin, "res/Components/kHzKnob.svg")));
-        shadow->box.pos = Vec(0.0, 3.5);
+        shadow->box.pos = Vec(0.0, 2.5);
     }
 };
 
 struct kHzKnobSmall : RoundKnob {
     kHzKnobSmall() {
         setSVG(SVG::load(assetPlugin(plugin, "res/Components/kHzKnobSmall.svg")));
+        shadow->box.pos = Vec(0.0, 2.5);
+    }
+};
+
+struct kHzKnobTiny : RoundKnob {
+    kHzKnobTiny() {
+        setSVG(SVG::load(assetPlugin(plugin, "res/Components/kHzKnobTiny.svg")));
         shadow->box.pos = Vec(0.0, 2.5);
     }
 };
@@ -54,7 +62,7 @@ struct kHzButton : SVGSwitch, ToggleSwitch {
 struct kHzPort : SVGPort {
     kHzPort() {
         setSVG(SVG::load(assetPlugin(plugin, "res/Components/kHzPort.svg")));
-        shadow->box.pos = Vec(0.0, 2.0);
+        shadow->box.pos = Vec(0.0, 1.5);
     }
 };
 

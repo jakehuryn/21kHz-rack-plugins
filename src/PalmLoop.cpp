@@ -38,7 +38,6 @@ struct PalmLoop : Module {
     float phase = 0.0f;
     float oldPhase = 0.0f;
     float square = 1.0f;
-    
     int discont = 0;
     int oldDiscont = 0;
     
@@ -62,7 +61,7 @@ struct PalmLoop : Module {
 
 
 void PalmLoop::onSampleRateChange() {
-    log2sampleFreq = log2f(1 / engineGetSampleTime()) - 0.00009f;
+    log2sampleFreq = log2f(1.0f / engineGetSampleTime()) - 0.00009f;
 }
 
 
@@ -83,22 +82,14 @@ void PalmLoop::step() {
     }
     
     float freq = params[OCT_PARAM].value + 0.031360 + 0.083333 * params[COARSE_PARAM].value + params[FINE_PARAM].value + inputs[V_OCT_INPUT].value;
-    if (inputs[EXP_FM_INPUT].active) {
-        freq += params[EXP_FM_PARAM].value * inputs[EXP_FM_INPUT].value;
-        if (freq >= log2sampleFreq) {
-            freq = log2sampleFreq;
-        }
-        freq = powf(2.0f, freq);
+    freq += params[EXP_FM_PARAM].value * inputs[EXP_FM_INPUT].value;
+    if (freq >= log2sampleFreq) {
+        freq = log2sampleFreq;
     }
-    else {
-        if (freq >= log2sampleFreq) {
-            freq = log2sampleFreq;
-        }
-        freq = powf(2.0f, freq);
-    }
+    freq = powf(2.0f, freq);
     float incr = 0.0f;
     if (inputs[LIN_FM_INPUT].active) {
-        freq += params[LIN_FM_PARAM].value * params[LIN_FM_PARAM].value * inputs[LIN_FM_INPUT].value;
+        freq += params[LIN_FM_PARAM].value * params[LIN_FM_PARAM].value * params[LIN_FM_PARAM].value * inputs[LIN_FM_INPUT].value;
         incr = engineGetSampleTime() * freq;
         if (incr > 1.0f) {
             incr = 1.0f;
@@ -145,9 +136,6 @@ void PalmLoop::step() {
         outputs[SAW_OUTPUT].value = clampf(10.0f * (sawBuffer[0] - 0.5f), -5.0f, 5.0f);
     }
     if (outputs[SQR_OUTPUT].active) {
-        // for some reason i don't understand, if discontinuities happen in two
-        // adjacent samples, the first one must be inverted. otherwise the polyblep
-        // is bad and causes aliasing. don't ask me how i managed to figure this out.
         if (discont == 0) {
             if (oldDiscont == 1) {
                 polyblep4(sqrBuffer, 1.0f - oldPhase / incr, -2.0f * square);
@@ -217,7 +205,7 @@ struct PalmLoopWidget : ModuleWidget {
         addParam(ParamWidget::create<kHzKnobSmall>(Vec(72, 112), module, PalmLoop::FINE_PARAM, -0.083333, 0.083333, 0.0));
         
         addParam(ParamWidget::create<kHzKnobSmall>(Vec(16, 168), module, PalmLoop::EXP_FM_PARAM, -1.0, 1.0, 0.0));
-        addParam(ParamWidget::create<kHzKnobSmall>(Vec(72, 168), module, PalmLoop::LIN_FM_PARAM, -40.0, 40.0, 0.0));
+        addParam(ParamWidget::create<kHzKnobSmall>(Vec(72, 168), module, PalmLoop::LIN_FM_PARAM, -11.7, 11.7, 0.0));
         
         addInput(Port::create<kHzPort>(Vec(10, 234), Port::INPUT, module, PalmLoop::EXP_FM_INPUT));
         addInput(Port::create<kHzPort>(Vec(47, 234), Port::INPUT, module, PalmLoop::V_OCT_INPUT));

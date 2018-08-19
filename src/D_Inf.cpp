@@ -8,12 +8,11 @@ struct D_Inf : Module {
         COARSE_PARAM,
         HALF_SHARP_PARAM,
         INVERT_PARAM,
-        GATE_PARAM,
-        INVERT_TRIG_PARAM,
 		NUM_PARAMS
 	};
 	enum InputIds {
-        TRIG_INPUT,
+        INVERT_INPUT,
+        TRANSPOSE_INPUT,
         A_INPUT,
 		NUM_INPUTS
 	};
@@ -25,8 +24,10 @@ struct D_Inf : Module {
 		NUM_LIGHTS
 	};
     
+    bool invert = true;
     bool transpose = true;
     
+    SchmittTrigger invertTrigger;
     SchmittTrigger transposeTrigger;
 
 	D_Inf() : Module(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS) {}
@@ -39,41 +40,34 @@ struct D_Inf : Module {
 };
 
 
-void D_Inf::step() {
-    if (!inputs[TRIG_INPUT].active) {
-        transpose = true;
+void newState(bool &state, bool inactive, bool triggered) {
+    if (inactive) {
+        state = true;
     }
     else {
-        if (params[GATE_PARAM].value == 0) {
-            if (transposeTrigger.process(inputs[TRIG_INPUT].value)) {
-                transpose = !transpose;
-            }
-        }
-        else {
-            if (inputs[TRIG_INPUT].value >= 5.0f) {
-                transpose = true;
-            }
-            else {
-                transpose = false;
-            }
+        if (triggered) {
+            state = !state;
         }
     }
+}
+
+
+void D_Inf::step() {
+    if (params[INVERT_PARAM].value == 0) {
+        invert = false;
+    }
+    else {
+        newState(invert, !inputs[INVERT_INPUT].active, invertTrigger.process(inputs[INVERT_INPUT].value));
+    }
+    newState(transpose, !inputs[TRANSPOSE_INPUT].active, transposeTrigger.process(inputs[TRANSPOSE_INPUT].value));
     
     float output = inputs[A_INPUT].value;
+    if (invert) {
+        output *= -1.0f;
+    }
     if (transpose) {
-        if (params[INVERT_PARAM].value == 1) {
-            output *= -1.0f;
-        }
         output += params[OCTAVE_PARAM].value + 0.083333 * params[COARSE_PARAM].value + 0.041667 * params[HALF_SHARP_PARAM].value;
     }
-    else {
-        if (params[INVERT_TRIG_PARAM].value == 0) {
-            if (params[INVERT_PARAM].value == 1) {
-                output *= -1.0f;
-            }
-        }
-    }
-    
     outputs[A_OUTPUT].value = output;
 }
 
@@ -91,10 +85,8 @@ struct D_InfWidget : ModuleWidget {
         addParam(ParamWidget::create<kHzButton>(Vec(10, 150), module, D_Inf::HALF_SHARP_PARAM, 0, 1, 0));
         addParam(ParamWidget::create<kHzButton>(Vec(36, 150), module, D_Inf::INVERT_PARAM, 0, 1, 0));
         
-        addParam(ParamWidget::create<kHzButton>(Vec(10, 182), module, D_Inf::GATE_PARAM, 0, 1, 0));
-        addParam(ParamWidget::create<kHzButton>(Vec(36, 182), module, D_Inf::INVERT_TRIG_PARAM, 0, 1, 0));
-        
-        addInput(Port::create<kHzPort>(Vec(17, 234), Port::INPUT, module, D_Inf::TRIG_INPUT));
+        addInput(Port::create<kHzPort>(Vec(17, 192), Port::INPUT, module, D_Inf::INVERT_INPUT));
+        addInput(Port::create<kHzPort>(Vec(17, 234), Port::INPUT, module, D_Inf::TRANSPOSE_INPUT));
         addInput(Port::create<kHzPort>(Vec(17, 276), Port::INPUT, module, D_Inf::A_INPUT));
         addOutput(Port::create<kHzPort>(Vec(17, 318), Port::OUTPUT, module, D_Inf::A_OUTPUT));
 	}
