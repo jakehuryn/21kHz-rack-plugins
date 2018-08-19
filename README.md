@@ -2,7 +2,7 @@
 
 A couple of modules I made for [VCV Rack](https://vcvrack.com/). More to come. The following is a list of and documentation for each module in the plugin. Also, I've linked to audio demos next to the section title of some modules.
 
-<img src="docs/pl.png" alt="drawing" height="420px"/>
+<img src="docs/PalmLoop.png" alt="drawing" height="420px"/>
 
 ## Palm Loop ([Audio Demo](https://clyp.it/d5zatc4a))
 
@@ -20,7 +20,7 @@ There are five outputs. The top two are saw and sine, and the bottom three are s
 - If you have one modulating another, RESET both on the same trigger to keep the timbre consistent across pitch changes.
 - Mix or scan the outputs for varied waveshapes.
 
-<img src="docs/d.png" alt="drawing" height="420px"/>
+<img src="docs/D_Inf.png" alt="drawing" height="420px"/>
 
 ## *D*<sub>∞</sub>
 
@@ -28,8 +28,23 @@ A basic module for modifying V/OCT signals by transposition and inversion.
 
 The OCTAVE knob transposes the signal in octave increments (-4 to +4), and the COARSE knob transposes it in half step increments (-7 to +7). The 1/2 # button raises the transposed signal by a quarter step, so quartertone transpositions can be achieved. When the INV button is on, the incoming signal is inverted about 0V before being transposed.
 
-The rest of the controls determine when the transposition and inversion are done. By default, if there is no input at the TRIG port, the transposition is always active and the inversion active if the INV button is on. With the GATE button off, a trigger at the TRIG input will toggle the transposition between on and off. With the GATE button on, the transposition will only activate with a signal of >= 5.0V at the TRIG input (generally meant for 0-10V unipolar inputs). Finally, activating the button below INV means that the input will only be inverted when transposition is active (and the INV button is on). Otherwise, the signal will always be inverted if the INV button is on.
+The rest of the controls determine when the transposition and inversion are done. Both the TRANS and INV input accept triggers. By default, if there is no input at the TRANS port, the transposition is always active. If the TRANS port has an input, then a trigger from that input will toggle the transposition between being active and inactive. The INV input acts the same, but only if the corresponding button is on; if it is off, the signal is never inverted.
 
 **Tips**
-- Swap between differently transposed sequences with a sequential switch for harmonic movement.
-- Turn on INV and the button below it, and transpose so that the inverted signal is in the same key as the incoming signal. An input at TRIG will create some nice melodic variation, especially if it is offset from the main rhythm.
+- Swap between differently transposed sequences with a sequential switch for controlled harmonic movement.
+- Send the same trigger to both INV and TRANS, and transpose so that the inverted signal is in the same key as the unaltered signal. The trigger will create some nice melodic variation, especially if it is offset from the main rhythm.
+
+<img src="docs/TachyonEntangler.png" alt="drawing" height="420px"/>
+
+## Tachyon Entangler
+
+The Tachyon Entangler is a chaotic sync oscillator, and is at its core two Palm Loop oscillators with chaos, which can be probabilistically cross-synced. By default, oscillator A (left) is the master and oscillator B (right) is the slave.
+
+The OCTAVE, COARSE and FINE knobs are master pitch controls for both oscillators and function identically to Palm Loop. The RATIO B knob changes the frequency ratio of oscillator B with respect to the master pitch. Sweeping this gives the classic sync sound.
+
+Each oscillator has exponential and linear FM inputs and attenuverters. In addition, they both have CHAOS and SYNC knobs. The CHAOS knob basically introduces randomness into the oscillation, making the signal noisy. The SYNC knob is the probability that the oscillator will be synced to the other. Fully counterclockwise is no sync and fully clockwise is hard sync; settings in between yield glitchy and stuttery effects (12 o'clock being the most chaotic sounding setting). The CHAOS and SYNC settings also have modulation inputs and dedicated attenuverters.
+
+Each oscillator also has a V/O (volt per octave, i.e. pitch) input and a RST (reset) input. Note that the V/O A is by default normalled to V/O B. Finally, each oscillator has two outputs, saw and square. As in Palm Loop, the square output is pitched an octave lower, and the sync algorithm for the square waveform functions somewhat unconventionally, giving a unique sound (make sure to mess with the RATIO knob!).
+
+**Tips**
+- FM of the synced oscillator can produce some crazy harmonic effects, as can cross-modulation of the two oscillators.
