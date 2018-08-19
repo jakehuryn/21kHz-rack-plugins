@@ -208,10 +208,10 @@ void TachyonEntangler::step() {
         syncDiscontA = 0;
     }
     if (syncDiscontA == 0) {
-        decrB = advancePhase(phaseB, squareB, incrB, params[B_CHAOS_PARAM].value + params[A_CHAOS_MOD_PARAM].value * inputs[A_CHAOS_INPUT].value, discontB);
+        decrB = advancePhase(phaseB, squareB, incrB, params[B_CHAOS_PARAM].value + params[B_CHAOS_MOD_PARAM].value * inputs[B_CHAOS_INPUT].value, discontB);
     }
     else {
-        decrB = advancePhase(phaseB, squareB, incrB, params[B_CHAOS_PARAM].value + params[A_CHAOS_MOD_PARAM].value * inputs[A_CHAOS_INPUT].value, discontB);
+        decrB = advancePhase(phaseB, squareB, incrB, params[B_CHAOS_PARAM].value + params[B_CHAOS_MOD_PARAM].value * inputs[B_CHAOS_INPUT].value, discontB);
         if (outputs[B_SAW_OUTPUT].active || outputs[B_SQR_OUTPUT].active) {
             if (discontB == 0) {
             }
