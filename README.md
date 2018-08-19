@@ -48,3 +48,5 @@ Each oscillator also has a V/O (volt per octave, i.e. pitch) input and a RST (re
 
 **Tips**
 - FM of the synced oscillator can produce some crazy harmonic effects, as can cross-modulation of the two oscillators.
+- Subtle offsetting of the CHAOS and SYNC knobs from the "clean" positions can create some interesting effects. Each of these knobs can give a different character to the sound.
+- If you self-modulate enough, you can turn it into a weird quad noise generator, each output being slightly different. Sometimes the noise will cut in and out of existence.
