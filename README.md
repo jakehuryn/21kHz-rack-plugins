@@ -44,7 +44,7 @@ The OCTAVE, COARSE and FINE knobs are master pitch controls for both oscillators
 
 Each oscillator has exponential and linear FM inputs and attenuverters. In addition, they both have CHAOS and SYNC knobs. The CHAOS knob basically introduces randomness into the oscillation, making the signal noisy. The SYNC knob is the probability that the oscillator will be synced to the other. Fully counterclockwise is no sync and fully clockwise is hard sync; settings in between yield glitchy and stuttery effects (12 o'clock being the most chaotic sounding setting). The CHAOS and SYNC settings also have modulation inputs and dedicated attenuverters.
 
-Each oscillator also has a V/O (volt per octave, i.e. pitch) input and a RST (reset) input. Note that the V/O A is by default normalled to V/O B. Finally, each oscillator has two outputs, saw and square. As in Palm Loop, the square output is pitched an octave lower, and the sync algorithm for the square waveform functions somewhat unconventionally, giving a unique sound (make sure to mess with the RATIO knob!).
+Each oscillator also has a V/O (volt per octave, i.e. pitch) input and a RST (reset) input. Note that the V/O A is by default normalled to V/O B. Finally, each oscillator has two outputs, saw and square. As in Palm Loop, the square output is pitched an octave lower. The square sync is somewhat experimental and functions unconventionally, so it has a unique sound but might work unexpectedly in some situations (make sure to mess with the RATIO knob!).
 
 **Tips**
 - FM of the synced oscillator can produce some crazy harmonic effects, as can cross-modulation of the two oscillators.
