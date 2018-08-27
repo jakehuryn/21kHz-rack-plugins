@@ -47,6 +47,7 @@ Each oscillator has exponential and linear FM inputs and attenuverters. In addit
 Each oscillator also has a V/O (volt per octave, i.e. pitch) input and a RST (reset) input. Note that the V/O A is by default normalled to V/O B. Finally, each oscillator has two outputs, saw and square. As in Palm Loop, the square output is pitched an octave lower. The square sync is somewhat experimental and functions unconventionally, so it has a unique sound but might work unexpectedly in some situations (make sure to mess with the RATIO knob!).
 
 **Tips**
+- Modulating EXP B is the same as modulating the RATIO knob.
 - FM of the synced oscillator can produce some crazy harmonic effects, as can cross-modulation of the two oscillators.
 - Subtle offsetting of the CHAOS and SYNC knobs from the "clean" positions can create some interesting effects. Each of these knobs can give a different character to the sound.
 - If you self-modulate enough, you can turn it into a weird quad noise generator, each output being slightly different. Sometimes the noise will cut in and out of existence.
