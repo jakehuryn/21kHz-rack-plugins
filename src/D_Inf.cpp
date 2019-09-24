@@ -1,6 +1,4 @@
 #include "21kHz.hpp"
-//#include "dsp/digital.hpp"
-
 
 struct D_Inf : Module {
 	enum ParamIds {
@@ -27,13 +25,17 @@ struct D_Inf : Module {
     bool invert = true;
     bool transpose = true;
     
-    SchmittTrigger invertTrigger;
-    SchmittTrigger transposeTrigger;
+    dsp::SchmittTrigger invertTrigger;
+    dsp::SchmittTrigger transposeTrigger;
 
 	D_Inf() {
     config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
+    configParam(OCTAVE_PARAM, -4, 4, 0);
+    configParam(COARSE_PARAM, -7, 7, 0);
+    configParam(HALF_SHARP_PARAM, 0, 1, 0);
+    configParam(INVERT_PARAM, 0, 1, 0);
   }
-	void step() override;
+	void process(const ProcessArgs &args) override;
 
 };
 
@@ -50,7 +52,7 @@ void newState(bool &state, bool inactive, bool triggered) {
 }
 
 
-void D_Inf::step() {
+void D_Inf::process(const ProcessArgs &args) {
     if (params[INVERT_PARAM].value == 0) {
         invert = false;
     }
@@ -73,32 +75,23 @@ void D_Inf::step() {
 struct D_InfWidget : ModuleWidget {
 	D_InfWidget(D_Inf *module) {
     setModule(module);
-		setPanel(SVG::load(assetPlugin(pluginInstance, "res/Panels/D_Inf.svg")));
+		setPanel(APP->window->loadSvg(asset::plugin(pluginInstance, "res/Panels/D_Inf.svg")));
 
-        addChild(createWidget<kHzScrew>(Vec(RACK_GRID_WIDTH, 0)));
-        addChild(createWidget<kHzScrew>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
+    addChild(createWidget<kHzScrew>(Vec(RACK_GRID_WIDTH, 0)));
+    addChild(createWidget<kHzScrew>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
         
-        addParam(createParam<kHzKnobSmallSnap>(Vec(14, 40), module, D_Inf::OCTAVE_PARAM, -4, 4, 0));
-        addParam(createParam<kHzKnobSmallSnap>(Vec(14, 96), module, D_Inf::COARSE_PARAM, -7, 7, 0));
+    addParam(createParam<kHzKnobSmallSnap>(Vec(14, 40), module, D_Inf::OCTAVE_PARAM));
+    addParam(createParam<kHzKnobSmallSnap>(Vec(14, 96), module, D_Inf::COARSE_PARAM));
+       
+    addParam(createParam<kHzButton>(Vec(10, 150), module, D_Inf::HALF_SHARP_PARAM));
+    addParam(createParam<kHzButton>(Vec(36, 150), module, D_Inf::INVERT_PARAM));
         
-        addParam(createParam<kHzButton>(Vec(10, 150), module, D_Inf::HALF_SHARP_PARAM, 0, 1, 0));
-        addParam(createParam<kHzButton>(Vec(36, 150), module, D_Inf::INVERT_PARAM, 0, 1, 0));
-        
-        addInput(createPort<kHzPort>(Vec(17, 192), PortWidget::INPUT, module, D_Inf::INVERT_INPUT));
-        addInput(createPort<kHzPort>(Vec(17, 234), PortWidget::INPUT, module, D_Inf::TRANSPOSE_INPUT));
-        addInput(createPort<kHzPort>(Vec(17, 276), PortWidget::INPUT, module, D_Inf::A_INPUT));
-        addOutput(createPort<kHzPort>(Vec(17, 318), PortWidget::OUTPUT, module, D_Inf::A_OUTPUT));
+    addInput(createInput<kHzPort>(Vec(17, 192), module, D_Inf::INVERT_INPUT));
+    addInput(createInput<kHzPort>(Vec(17, 234), module, D_Inf::TRANSPOSE_INPUT));
+    addInput(createInput<kHzPort>(Vec(17, 276), module, D_Inf::A_INPUT));
+    addOutput(createOutput<kHzPort>(Vec(17, 318), module, D_Inf::A_OUTPUT));
 	}
 };
 
-
-// Specify the Module and ModuleWidget subclass, human-readable
-// author name for categorization per plugin, module slug (should never
-// change), human-readable module name, and any number of tags
-// (found in `include/tags.hpp`) separated by commas.
 Model *modelD_Inf = createModel<D_Inf, D_InfWidget>("D_Inf");
 
-
-// history
-// 0.6.1
-//	create

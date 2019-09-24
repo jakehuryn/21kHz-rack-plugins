@@ -1,11 +1,8 @@
 #include "21kHz.hpp"
-//#include "dsp/digital.hpp"
 #include "dsp/math.hpp"
 #include <array>
 
-
 using std::array;
-
 
 struct PalmLoop : Module {
 	enum ParamIds {
@@ -47,19 +44,24 @@ struct PalmLoop : Module {
     
     float log2sampleFreq = 15.4284f;
     
-    SchmittTrigger resetTrigger;
+    dsp::SchmittTrigger resetTrigger;
 
 	PalmLoop() {
     config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
+    configParam(OCT_PARAM, 4, 12, 8);
+    configParam(COARSE_PARAM, -7, 7, 0);
+    configParam(FINE_PARAM, -0.083333, 0.083333, 0.0);
+    configParam(EXP_FM_PARAM, -1.0, 1.0, 0.0);
+    configParam(LIN_FM_PARAM, -11.7, 11.7, 0.0);
   }
-	void step() override;
+	void process(const ProcessArgs &args) override;
   void onSampleRateChange() override;
 
 };
 
 
 void PalmLoop::onSampleRateChange() {
-    log2sampleFreq = log2f(1.0f / engineGetSampleTime()) - 0.00009f;
+    log2sampleFreq = log2f(1.0f / APP->engine->getSampleTime()) - 0.00009f;
 }
 
 
@@ -68,7 +70,8 @@ void PalmLoop::onSampleRateChange() {
 // discontinuities) only occur each time the phasor exceeds a [0, 1) range. when we calculate the outputs, we look to see
 // if a discontinuity occured in the previous sample. if one did, we calculate the polyblep or polyblamp and add it to
 // each sample in the buffer. the output is the oldest buffer sample, which gets overwritten in the following step.
-void PalmLoop::step() {
+
+void PalmLoop::process(const ProcessArgs &args) {
     if (resetTrigger.process(inputs[RESET_INPUT].value)) {
         phase = 0.0f;
     }
@@ -88,7 +91,7 @@ void PalmLoop::step() {
     float incr = 0.0f;
     if (inputs[LIN_FM_INPUT].active) {
         freq += params[LIN_FM_PARAM].value * params[LIN_FM_PARAM].value * params[LIN_FM_PARAM].value * inputs[LIN_FM_INPUT].value;
-        incr = engineGetSampleTime() * freq;
+        incr = args.sampleTime * freq;
         if (incr > 1.0f) {
             incr = 1.0f;
         }
@@ -97,7 +100,7 @@ void PalmLoop::step() {
         }
     }
     else {
-        incr = engineGetSampleTime() * freq;
+        incr = args.sampleTime * freq;
     }
     
     phase += incr;
@@ -131,7 +134,7 @@ void PalmLoop::step() {
         else if (oldDiscont == -1) {
             polyblep4(sawBuffer, 1.0f - (oldPhase - 1.0f) / incr, -1.0f);
         }
-        outputs[SAW_OUTPUT].value = clampf(10.0f * (sawBuffer[0] - 0.5f), -5.0f, 5.0f);
+        outputs[SAW_OUTPUT].value = clamp(10.0f * (sawBuffer[0] - 0.5f), -5.0f, 5.0f);
     }
     if (outputs[SQR_OUTPUT].active) {
         if (discont == 0) {
@@ -150,7 +153,7 @@ void PalmLoop::step() {
                 polyblep4(sqrBuffer, 1.0f - (oldPhase - 1.0f) / incr, 2.0f * square);
             }
         }
-        outputs[SQR_OUTPUT].value = clampf(4.9999f * sqrBuffer[0], -5.0f, 5.0f);
+        outputs[SQR_OUTPUT].value = clamp(4.9999f * sqrBuffer[0], -5.0f, 5.0f);
     }
     if (outputs[TRI_OUTPUT].active) {
         if (discont == 0) {
@@ -169,7 +172,7 @@ void PalmLoop::step() {
                 polyblamp4(triBuffer, 1.0f - (oldPhase - 1.0f) / incr, -2.0f * square * incr);
             }
         }
-        outputs[TRI_OUTPUT].value = clampf(10.0f * (triBuffer[0] - 0.5f), -5.0f, 5.0f);
+        outputs[TRI_OUTPUT].value = clamp(10.0f * (triBuffer[0] - 0.5f), -5.0f, 5.0f);
     }
     if (outputs[SIN_OUTPUT].active) {
         outputs[SIN_OUTPUT].value = 5.0f * sin_01(phase);
@@ -191,47 +194,35 @@ void PalmLoop::step() {
 struct PalmLoopWidget : ModuleWidget {
 	PalmLoopWidget(PalmLoop *module) {
     setModule(module);
-		setPanel(SVG::load(assetPlugin(pluginInstance, "res/Panels/PalmLoop.svg")));
+		setPanel(APP->window->loadSvg(asset::plugin(pluginInstance, "res/Panels/PalmLoop.svg")));
 
 		addChild(createWidget<kHzScrew>(Vec(RACK_GRID_WIDTH, 0)));
 		addChild(createWidget<kHzScrew>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, 0)));
 		addChild(createWidget<kHzScrew>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
-        addChild(createWidget<kHzScrew>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
+    addChild(createWidget<kHzScrew>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 
-        addParam(createParam<kHzKnobSnap>(Vec(36, 40), module, PalmLoop::OCT_PARAM, 4, 12, 8));
+    addParam(createParam<kHzKnobSnap>(Vec(36, 40), module, PalmLoop::OCT_PARAM));
         
-        addParam(createParam<kHzKnobSmallSnap>(Vec(16, 112), module, PalmLoop::COARSE_PARAM, -7, 7, 0));
-        addParam(createParam<kHzKnobSmall>(Vec(72, 112), module, PalmLoop::FINE_PARAM, -0.083333, 0.083333, 0.0));
+    addParam(createParam<kHzKnobSmallSnap>(Vec(16, 112), module, PalmLoop::COARSE_PARAM));
+    addParam(createParam<kHzKnobSmall>(Vec(72, 112), module, PalmLoop::FINE_PARAM));
+       
+    addParam(createParam<kHzKnobSmall>(Vec(16, 168), module, PalmLoop::EXP_FM_PARAM));
+    addParam(createParam<kHzKnobSmall>(Vec(72, 168), module, PalmLoop::LIN_FM_PARAM));
         
-        addParam(createParam<kHzKnobSmall>(Vec(16, 168), module, PalmLoop::EXP_FM_PARAM, -1.0, 1.0, 0.0));
-        addParam(createParam<kHzKnobSmall>(Vec(72, 168), module, PalmLoop::LIN_FM_PARAM, -11.7, 11.7, 0.0));
+    addInput(createInput<kHzPort>(Vec(10, 234), module, PalmLoop::EXP_FM_INPUT));
+    addInput(createInput<kHzPort>(Vec(47, 234), module, PalmLoop::V_OCT_INPUT));
+    addInput(createInput<kHzPort>(Vec(84, 234), module, PalmLoop::LIN_FM_INPUT));
+      
+    addInput(createInput<kHzPort>(Vec(10, 276), module, PalmLoop::RESET_INPUT));
+    addOutput(createOutput<kHzPort>(Vec(47, 276), module, PalmLoop::SAW_OUTPUT));
+    addOutput(createOutput<kHzPort>(Vec(84, 276), module, PalmLoop::SIN_OUTPUT));
         
-        addInput(createPort<kHzPort>(Vec(10, 234), PortWidget::INPUT, module, PalmLoop::EXP_FM_INPUT));
-        addInput(createPort<kHzPort>(Vec(47, 234), PortWidget::INPUT, module, PalmLoop::V_OCT_INPUT));
-        addInput(createPort<kHzPort>(Vec(84, 234), PortWidget::INPUT, module, PalmLoop::LIN_FM_INPUT));
-        
-        addInput(createPort<kHzPort>(Vec(10, 276), PortWidget::INPUT, module, PalmLoop::RESET_INPUT));
-        addOutput(createPort<kHzPort>(Vec(47, 276), PortWidget::OUTPUT, module, PalmLoop::SAW_OUTPUT));
-        addOutput(createPort<kHzPort>(Vec(84, 276), PortWidget::OUTPUT, module, PalmLoop::SIN_OUTPUT));
-        
-        addOutput(createPort<kHzPort>(Vec(10, 318), PortWidget::OUTPUT, module, PalmLoop::SQR_OUTPUT));
-        addOutput(createPort<kHzPort>(Vec(47, 318), PortWidget::OUTPUT, module, PalmLoop::TRI_OUTPUT));
-        addOutput(createPort<kHzPort>(Vec(84, 318), PortWidget::OUTPUT, module, PalmLoop::SUB_OUTPUT));
+    addOutput(createOutput<kHzPort>(Vec(10, 318), module, PalmLoop::SQR_OUTPUT));
+    addOutput(createOutput<kHzPort>(Vec(47, 318), module, PalmLoop::TRI_OUTPUT));
+    addOutput(createOutput<kHzPort>(Vec(84, 318), module, PalmLoop::SUB_OUTPUT));
         
 	}
 };
 
-
-// Specify the Module and ModuleWidget subclass, human-readable
-// author name for categorization per plugin, module slug (should never
-// change), human-readable module name, and any number of tags
-// (found in `include/tags.hpp`) separated by commas.
 Model *modelPalmLoop = createModel<PalmLoop, PalmLoopWidget>("PalmLoop");
 
-// history
-// 0.6.0
-//	create
-// 0.6.1
-//	minor optimizations
-//	coarse goes -7 to +7
-//	waveform labels & rearrangement on panel

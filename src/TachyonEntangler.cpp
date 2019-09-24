@@ -1,5 +1,4 @@
 #include "21kHz.hpp"
-//#include "dsp/digital.hpp"
 #include "dsp/math.hpp"
 #include <math.h>
 #include <array>
@@ -80,13 +79,29 @@ struct TachyonEntangler : Module {
     
     float log2sampleFreq = 15.4284f;
     
-    SchmittTrigger resetTriggerA;
-    SchmittTrigger resetTriggerB;
+    dsp::SchmittTrigger resetTriggerA;
+    dsp::SchmittTrigger resetTriggerB;
 
 	TachyonEntangler() {
 		config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
+    configParam(A_OCTAVE_PARAM, 4, 12, 8);
+    configParam(A_COARSE_PARAM, -7, 7, 0);
+    configParam(A_FINE_PARAM, -0.083333, 0.083333, 0.0);
+    configParam(B_RATIO_PARAM, -1.0, 4.0, 0.0);
+    configParam(A_EXP_FM_PARAM, -1.7, 1.7, 0.0);
+    configParam(A_LIN_FM_PARAM, -11.7, 11.7, 0.0);
+    configParam(B_EXP_FM_PARAM, -1.7, 1.7, 0.0);
+    configParam(B_LIN_FM_PARAM, -11.7, 11.7, 0.0);
+    configParam(A_CHAOS_PARAM, 0.0, 1.0, 0.0);
+    configParam(A_SYNC_PROB_PARAM, 0.0, 1.0, 0.0);
+    configParam(B_CHAOS_PARAM, 0.0, 1.0, 0.0);
+    configParam(B_SYNC_PROB_PARAM, 0.0, 1.0, 1.0);
+    configParam(A_CHAOS_MOD_PARAM, -0.1, 0.1, 0.0);
+    configParam(A_SYNC_PROB_MOD_PARAM, -0.1, 0.1, 0.0);
+    configParam(B_CHAOS_MOD_PARAM, -0.1, 0.1, 0.0);
+    configParam(B_SYNC_PROB_MOD_PARAM, -0.1, 0.1, 0.0);
   }
-  void step() override;
+  void process(const ProcessArgs &args) override;
   void onSampleRateChange() override;
 
 };
@@ -100,7 +115,7 @@ float advancePhase(float &phase, float &square, float incr, float rand, int &dis
     }
     else if (phase >= 1.0f && incr >= 0.0f) {
         discont = 1;
-        decr = 1.0f - 2.0f * rand * (randomUniform() - 0.5f);
+        decr = 1.0f - 2.0f * rand * (random::uniform() - 0.5f);
         phase -= decr;
         square *= -1.0f;
         if (phase >= 1.0f) {
@@ -109,7 +124,7 @@ float advancePhase(float &phase, float &square, float incr, float rand, int &dis
     }
     else if (phase < 0.0f && incr < 0.0f) {
         discont = -1;
-        decr = 1.0f - 2.0f * rand * (randomUniform() - 0.5f);
+        decr = 1.0f - 2.0f * rand * (random::uniform() - 0.5f);
         phase += decr;
         square *= -1.0f;
         if (phase <= -1.0f) {
@@ -121,11 +136,11 @@ float advancePhase(float &phase, float &square, float incr, float rand, int &dis
 
 
 void TachyonEntangler::onSampleRateChange() {
-    log2sampleFreq = log2f(1.0f / engineGetSampleTime()) - 0.00009f;
+    log2sampleFreq = log2f(1.0f / APP->engine->getSampleTime()) - 0.00009f;
 }
 
 
-void TachyonEntangler::step() {
+void TachyonEntangler::process(const ProcessArgs &args) {
     if (resetTriggerA.process(inputs[A_RESET_INPUT].value)) {
         phaseA = 0.0f;
         squareA = 1.0f;
@@ -148,7 +163,7 @@ void TachyonEntangler::step() {
         oldIncrsB[i] = oldIncrsB[i + 1];
     }
     
-    float sampleTime = engineGetSampleTime();
+    float sampleTime = args.sampleTime;
     float centerPitch = params[A_OCTAVE_PARAM].value + 0.031360 + 0.083333 * params[A_COARSE_PARAM].value + params[A_FINE_PARAM].value;
     float pitchA = centerPitch + inputs[A_V_OCT_INPUT].value;
     if (inputs[A_EXP_FM_INPUT].active) {
@@ -199,7 +214,7 @@ void TachyonEntangler::step() {
     
     float decrA = advancePhase(phaseA, squareA, incrA, params[A_CHAOS_PARAM].value + params[A_CHAOS_MOD_PARAM].value * inputs[A_CHAOS_INPUT].value, discontA);
     float decrB = 1.0f;
-    if ((discontA == 1 || discontA == -1) && randomUniform() >= 1.0f - (params[B_SYNC_PROB_PARAM].value + params[B_SYNC_PROB_MOD_PARAM].value * inputs[B_SYNC_PROB_INPUT].value)) {
+    if ((discontA == 1 || discontA == -1) && random::uniform() >= 1.0f - (params[B_SYNC_PROB_PARAM].value + params[B_SYNC_PROB_MOD_PARAM].value * inputs[B_SYNC_PROB_INPUT].value)) {
         syncDiscontA = discontA;
     }
     else {
@@ -252,7 +267,7 @@ void TachyonEntangler::step() {
             ++phaseB;
         }
     }
-    if ((discontB == 1 || discontB == -1) && randomUniform() >= 1.0f - (params[A_SYNC_PROB_PARAM].value + params[A_SYNC_PROB_MOD_PARAM].value * inputs[A_SYNC_PROB_INPUT].value)) {
+    if ((discontB == 1 || discontB == -1) && random::uniform() >= 1.0f - (params[A_SYNC_PROB_PARAM].value + params[A_SYNC_PROB_MOD_PARAM].value * inputs[A_SYNC_PROB_INPUT].value)) {
         syncDiscontB = discontB;
     }
     else {
@@ -376,8 +391,8 @@ void TachyonEntangler::step() {
                 }
             }
         }
-        outputs[A_SAW_OUTPUT].value = clampf(10.0f * ((sawBufferA[0] + params[A_CHAOS_PARAM].value) / (1.0f + params[A_CHAOS_PARAM].value) - 0.5f), -5.0f, 5.0f);
-        outputs[A_SQR_OUTPUT].value = clampf(5.0f * sqrBufferA[0], -5.0f, 5.0f);
+        outputs[A_SAW_OUTPUT].value = clamp(10.0f * ((sawBufferA[0] + params[A_CHAOS_PARAM].value) / (1.0f + params[A_CHAOS_PARAM].value) - 0.5f), -5.0f, 5.0f);
+        outputs[A_SQR_OUTPUT].value = clamp(5.0f * sqrBufferA[0], -5.0f, 5.0f);
     }
     if (outputs[B_SAW_OUTPUT].active || outputs[B_SQR_OUTPUT].active) {
         if (oldSyncDiscontA == 0) {
@@ -445,8 +460,8 @@ void TachyonEntangler::step() {
                 }
             }
         }
-        outputs[B_SAW_OUTPUT].value = clampf(10.0f * ((sawBufferB[0] + params[B_CHAOS_PARAM].value) / (1.0f + params[B_CHAOS_PARAM].value) - 0.5f), -5.0f, 5.0f);
-        outputs[B_SQR_OUTPUT].value = clampf(5.0f * sqrBufferB[0], -5.0f, 5.0f);
+        outputs[B_SAW_OUTPUT].value = clamp(10.0f * ((sawBufferB[0] + params[B_CHAOS_PARAM].value) / (1.0f + params[B_CHAOS_PARAM].value) - 0.5f), -5.0f, 5.0f);
+        outputs[B_SQR_OUTPUT].value = clamp(5.0f * sqrBufferB[0], -5.0f, 5.0f);
     }
     
     oldDecrA = decrA;
@@ -461,59 +476,52 @@ void TachyonEntangler::step() {
 struct TachyonEntanglerWidget : ModuleWidget {
 	TachyonEntanglerWidget(TachyonEntangler *module) {
     setModule(module);
-		setPanel(SVG::load(assetPlugin(pluginInstance, "res/Panels/TachyonEntangler.svg")));
+		setPanel(APP->window->loadSvg(asset::plugin(pluginInstance, "res/Panels/TachyonEntangler.svg")));
 
 		addChild(createWidget<kHzScrew>(Vec(RACK_GRID_WIDTH, 0)));
 		addChild(createWidget<kHzScrew>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, 0)));
 		addChild(createWidget<kHzScrew>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
     addChild(createWidget<kHzScrew>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
         
-    addParam(createParam<kHzKnobSnap>(Vec(36, 40), module, TachyonEntangler::A_OCTAVE_PARAM, 4, 12, 8));
-    addParam(createParam<kHzKnobSmallSnap>(Vec(134, 112), module, TachyonEntangler::A_COARSE_PARAM, -7, 7, 0));
-    addParam(createParam<kHzKnobSmall>(Vec(134, 168), module, TachyonEntangler::A_FINE_PARAM, -0.083333, 0.083333, 0.0));
-    addParam(createParam<kHzKnob>(Vec(216, 40), module, TachyonEntangler::B_RATIO_PARAM, -1.0, 4.0, 0.0));
+    addParam(createParam<kHzKnobSnap>(Vec(36, 40), module, TachyonEntangler::A_OCTAVE_PARAM));
+    addParam(createParam<kHzKnobSmallSnap>(Vec(134, 112), module, TachyonEntangler::A_COARSE_PARAM));
+    addParam(createParam<kHzKnobSmall>(Vec(134, 168), module, TachyonEntangler::A_FINE_PARAM));
+    addParam(createParam<kHzKnob>(Vec(216, 40), module, TachyonEntangler::B_RATIO_PARAM));
   
-    addParam(createParam<kHzKnobSmall>(Vec(16, 112), module, TachyonEntangler::A_EXP_FM_PARAM, -1.7, 1.7, 0.0));
-    addParam(createParam<kHzKnobSmall>(Vec(72, 112), module, TachyonEntangler::A_LIN_FM_PARAM, -11.7, 11.7, 0.0));
-    addParam(createParam<kHzKnobSmall>(Vec(196, 112), module, TachyonEntangler::B_EXP_FM_PARAM, -1.7, 1.7, 0.0));
-    addParam(createParam<kHzKnobSmall>(Vec(252, 112), module, TachyonEntangler::B_LIN_FM_PARAM, -11.7, 11.7, 0.0));
+    addParam(createParam<kHzKnobSmall>(Vec(16, 112), module, TachyonEntangler::A_EXP_FM_PARAM));
+    addParam(createParam<kHzKnobSmall>(Vec(72, 112), module, TachyonEntangler::A_LIN_FM_PARAM));
+    addParam(createParam<kHzKnobSmall>(Vec(196, 112), module, TachyonEntangler::B_EXP_FM_PARAM));
+    addParam(createParam<kHzKnobSmall>(Vec(252, 112), module, TachyonEntangler::B_LIN_FM_PARAM));
         
-    addParam(createParam<kHzKnobSmall>(Vec(16, 168), module, TachyonEntangler::A_CHAOS_PARAM, 0.0, 1.0, 0.0));
-    addParam(createParam<kHzKnobSmall>(Vec(72, 168), module, TachyonEntangler::A_SYNC_PROB_PARAM, 0.0, 1.0, 0.0));
-    addParam(createParam<kHzKnobSmall>(Vec(196, 168), module, TachyonEntangler::B_CHAOS_PARAM, 0.0, 1.0, 0.0));
-    addParam(createParam<kHzKnobSmall>(Vec(252, 168), module, TachyonEntangler::B_SYNC_PROB_PARAM, 0.0, 1.0, 1.0));
+    addParam(createParam<kHzKnobSmall>(Vec(16, 168), module, TachyonEntangler::A_CHAOS_PARAM));
+    addParam(createParam<kHzKnobSmall>(Vec(72, 168), module, TachyonEntangler::A_SYNC_PROB_PARAM));
+    addParam(createParam<kHzKnobSmall>(Vec(196, 168), module, TachyonEntangler::B_CHAOS_PARAM));
+    addParam(createParam<kHzKnobSmall>(Vec(252, 168), module, TachyonEntangler::B_SYNC_PROB_PARAM));
         
-    addParam(createParam<kHzKnobTiny>(Vec(50, 224), module, TachyonEntangler::A_CHAOS_MOD_PARAM, -0.1, 0.1, 0.0));
-    addParam(createParam<kHzKnobTiny>(Vec(106, 224), module, TachyonEntangler::A_SYNC_PROB_MOD_PARAM, -0.1, 0.1, 0.0));
-    addParam(createParam<kHzKnobTiny>(Vec(174, 224), module, TachyonEntangler::B_CHAOS_MOD_PARAM, -0.1, 0.1, 0.0));
-    addParam(createParam<kHzKnobTiny>(Vec(230, 224), module, TachyonEntangler::B_SYNC_PROB_MOD_PARAM, -0.1, 0.1, 0.0));
+    addParam(createParam<kHzKnobTiny>(Vec(50, 224), module, TachyonEntangler::A_CHAOS_MOD_PARAM));
+    addParam(createParam<kHzKnobTiny>(Vec(106, 224), module, TachyonEntangler::A_SYNC_PROB_MOD_PARAM));
+    addParam(createParam<kHzKnobTiny>(Vec(174, 224), module, TachyonEntangler::B_CHAOS_MOD_PARAM));
+    addParam(createParam<kHzKnobTiny>(Vec(230, 224), module, TachyonEntangler::B_SYNC_PROB_MOD_PARAM));
         
-    addInput(createPort<kHzPort>(Vec(7.5, 276), PortWidget::INPUT, module, TachyonEntangler::A_EXP_FM_INPUT));
-    addInput(createPort<kHzPort>(Vec(44.5, 276), PortWidget::INPUT, module, TachyonEntangler::A_LIN_FM_INPUT));
-    addInput(createPort<kHzPort>(Vec(81.5, 276), PortWidget::INPUT, module, TachyonEntangler::A_CHAOS_INPUT));
-    addInput(createPort<kHzPort>(Vec(118.5, 276), PortWidget::INPUT, module, TachyonEntangler::A_SYNC_PROB_INPUT));
-    addInput(createPort<kHzPort>(Vec(155.5, 276), PortWidget::INPUT, module, TachyonEntangler::B_CHAOS_INPUT));
-    addInput(createPort<kHzPort>(Vec(192.5, 276), PortWidget::INPUT, module, TachyonEntangler::B_SYNC_PROB_INPUT));
-    addInput(createPort<kHzPort>(Vec(229.5, 276), PortWidget::INPUT, module, TachyonEntangler::B_EXP_FM_INPUT));
-    addInput(createPort<kHzPort>(Vec(266.5, 276), PortWidget::INPUT, module, TachyonEntangler::B_LIN_FM_INPUT));
+    addInput(createInput<kHzPort>(Vec(7.5, 276), module, TachyonEntangler::A_EXP_FM_INPUT));
+    addInput(createInput<kHzPort>(Vec(44.5, 276), module, TachyonEntangler::A_LIN_FM_INPUT));
+    addInput(createInput<kHzPort>(Vec(81.5, 276), module, TachyonEntangler::A_CHAOS_INPUT));
+    addInput(createInput<kHzPort>(Vec(118.5, 276), module, TachyonEntangler::A_SYNC_PROB_INPUT));
+    addInput(createInput<kHzPort>(Vec(155.5, 276), module, TachyonEntangler::B_CHAOS_INPUT));
+    addInput(createInput<kHzPort>(Vec(192.5, 276), module, TachyonEntangler::B_SYNC_PROB_INPUT));
+    addInput(createInput<kHzPort>(Vec(229.5, 276), module, TachyonEntangler::B_EXP_FM_INPUT));
+    addInput(createInput<kHzPort>(Vec(266.5, 276), module, TachyonEntangler::B_LIN_FM_INPUT));
         
-    addInput(createPort<kHzPort>(Vec(7.5, 318), PortWidget::INPUT, module, TachyonEntangler::A_V_OCT_INPUT));
-    addInput(createPort<kHzPort>(Vec(44.5, 318), PortWidget::INPUT, module, TachyonEntangler::A_RESET_INPUT));
-    addOutput(createPort<kHzPort>(Vec(81.5, 318), PortWidget::OUTPUT, module, TachyonEntangler::A_SAW_OUTPUT));
-    addOutput(createPort<kHzPort>(Vec(118.5, 318), PortWidget::OUTPUT, module, TachyonEntangler::A_SQR_OUTPUT));
-    addOutput(createPort<kHzPort>(Vec(155.5, 318), PortWidget::OUTPUT, module, TachyonEntangler::B_SAW_OUTPUT));
-    addOutput(createPort<kHzPort>(Vec(192.5, 318), PortWidget::OUTPUT, module, TachyonEntangler::B_SQR_OUTPUT));
-    addInput(createPort<kHzPort>(Vec(229.5, 318), PortWidget::INPUT, module, TachyonEntangler::B_V_OCT_INPUT));
-    addInput(createPort<kHzPort>(Vec(266.5, 318), PortWidget::INPUT, module, TachyonEntangler::B_RESET_INPUT));
+    addInput(createInput<kHzPort>(Vec(7.5, 318), module, TachyonEntangler::A_V_OCT_INPUT));
+    addInput(createInput<kHzPort>(Vec(44.5, 318), module, TachyonEntangler::A_RESET_INPUT));
+    addOutput(createOutput<kHzPort>(Vec(81.5, 318), module, TachyonEntangler::A_SAW_OUTPUT));
+    addOutput(createOutput<kHzPort>(Vec(118.5, 318), module, TachyonEntangler::A_SQR_OUTPUT));
+    addOutput(createOutput<kHzPort>(Vec(155.5, 318), module, TachyonEntangler::B_SAW_OUTPUT));
+    addOutput(createOutput<kHzPort>(Vec(192.5, 318), module, TachyonEntangler::B_SQR_OUTPUT));
+    addInput(createInput<kHzPort>(Vec(229.5, 318), module, TachyonEntangler::B_V_OCT_INPUT));
+    addInput(createInput<kHzPort>(Vec(266.5, 318), module, TachyonEntangler::B_RESET_INPUT));
 	}
 };
 
-
-// Specify the Module and ModuleWidget subclass, human-readable
-// author name for categorization per plugin, module slug (should never
-// change), human-readable module name, and any number of tags
-// (found in `include/tags.hpp`) separated by commas.
 Model *modelTachyonEntangler = createModel<TachyonEntangler, TachyonEntanglerWidget>("TachyonEntangler");
 
-// 0.6.1
-//  create
