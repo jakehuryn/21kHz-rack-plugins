@@ -1,13 +1,11 @@
 #include "21kHz.hpp"
 
 
-Plugin *plugin;
+Plugin *pluginInstance;
 
 
 void init(Plugin *p) {
-	plugin = p;
-	p->slug = TOSTRING(SLUG);
-	p->version = TOSTRING(VERSION);
+	pluginInstance = p;
 
 	// Add all Models defined throughout the plugin
     p->addModel(modelPalmLoop);

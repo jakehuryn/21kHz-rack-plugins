@@ -1,5 +1,5 @@
 #include "21kHz.hpp"
-#include "dsp/digital.hpp"
+//#include "dsp/digital.hpp"
 #include "dsp/math.hpp"
 #include <array>
 
@@ -49,14 +49,12 @@ struct PalmLoop : Module {
     
     SchmittTrigger resetTrigger;
 
-	PalmLoop() : Module(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS) {}
+	PalmLoop() {
+    config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
+  }
 	void step() override;
-    void onSampleRateChange() override;
+  void onSampleRateChange() override;
 
-	// For more advanced Module features, read Rack's engine.hpp header file
-	// - toJson, fromJson: serialization of internal data
-	// - onSampleRateChange: event triggered by a change of sample rate
-	// - onReset, onRandomize, onCreate, onDelete: implements special behavior when user clicks these from the context menu
 };
 
 
@@ -191,33 +189,34 @@ void PalmLoop::step() {
 
 
 struct PalmLoopWidget : ModuleWidget {
-	PalmLoopWidget(PalmLoop *module) : ModuleWidget(module) {
-		setPanel(SVG::load(assetPlugin(plugin, "res/Panels/PalmLoop.svg")));
+	PalmLoopWidget(PalmLoop *module) {
+    setModule(module);
+		setPanel(SVG::load(assetPlugin(pluginInstance, "res/Panels/PalmLoop.svg")));
 
-		addChild(Widget::create<kHzScrew>(Vec(RACK_GRID_WIDTH, 0)));
-		addChild(Widget::create<kHzScrew>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, 0)));
-		addChild(Widget::create<kHzScrew>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
-        addChild(Widget::create<kHzScrew>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
+		addChild(createWidget<kHzScrew>(Vec(RACK_GRID_WIDTH, 0)));
+		addChild(createWidget<kHzScrew>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, 0)));
+		addChild(createWidget<kHzScrew>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
+        addChild(createWidget<kHzScrew>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 
-        addParam(ParamWidget::create<kHzKnobSnap>(Vec(36, 40), module, PalmLoop::OCT_PARAM, 4, 12, 8));
+        addParam(createParam<kHzKnobSnap>(Vec(36, 40), module, PalmLoop::OCT_PARAM, 4, 12, 8));
         
-        addParam(ParamWidget::create<kHzKnobSmallSnap>(Vec(16, 112), module, PalmLoop::COARSE_PARAM, -7, 7, 0));
-        addParam(ParamWidget::create<kHzKnobSmall>(Vec(72, 112), module, PalmLoop::FINE_PARAM, -0.083333, 0.083333, 0.0));
+        addParam(createParam<kHzKnobSmallSnap>(Vec(16, 112), module, PalmLoop::COARSE_PARAM, -7, 7, 0));
+        addParam(createParam<kHzKnobSmall>(Vec(72, 112), module, PalmLoop::FINE_PARAM, -0.083333, 0.083333, 0.0));
         
-        addParam(ParamWidget::create<kHzKnobSmall>(Vec(16, 168), module, PalmLoop::EXP_FM_PARAM, -1.0, 1.0, 0.0));
-        addParam(ParamWidget::create<kHzKnobSmall>(Vec(72, 168), module, PalmLoop::LIN_FM_PARAM, -11.7, 11.7, 0.0));
+        addParam(createParam<kHzKnobSmall>(Vec(16, 168), module, PalmLoop::EXP_FM_PARAM, -1.0, 1.0, 0.0));
+        addParam(createParam<kHzKnobSmall>(Vec(72, 168), module, PalmLoop::LIN_FM_PARAM, -11.7, 11.7, 0.0));
         
-        addInput(Port::create<kHzPort>(Vec(10, 234), Port::INPUT, module, PalmLoop::EXP_FM_INPUT));
-        addInput(Port::create<kHzPort>(Vec(47, 234), Port::INPUT, module, PalmLoop::V_OCT_INPUT));
-        addInput(Port::create<kHzPort>(Vec(84, 234), Port::INPUT, module, PalmLoop::LIN_FM_INPUT));
+        addInput(createPort<kHzPort>(Vec(10, 234), PortWidget::INPUT, module, PalmLoop::EXP_FM_INPUT));
+        addInput(createPort<kHzPort>(Vec(47, 234), PortWidget::INPUT, module, PalmLoop::V_OCT_INPUT));
+        addInput(createPort<kHzPort>(Vec(84, 234), PortWidget::INPUT, module, PalmLoop::LIN_FM_INPUT));
         
-        addInput(Port::create<kHzPort>(Vec(10, 276), Port::INPUT, module, PalmLoop::RESET_INPUT));
-        addOutput(Port::create<kHzPort>(Vec(47, 276), Port::OUTPUT, module, PalmLoop::SAW_OUTPUT));
-        addOutput(Port::create<kHzPort>(Vec(84, 276), Port::OUTPUT, module, PalmLoop::SIN_OUTPUT));
+        addInput(createPort<kHzPort>(Vec(10, 276), PortWidget::INPUT, module, PalmLoop::RESET_INPUT));
+        addOutput(createPort<kHzPort>(Vec(47, 276), PortWidget::OUTPUT, module, PalmLoop::SAW_OUTPUT));
+        addOutput(createPort<kHzPort>(Vec(84, 276), PortWidget::OUTPUT, module, PalmLoop::SIN_OUTPUT));
         
-        addOutput(Port::create<kHzPort>(Vec(10, 318), Port::OUTPUT, module, PalmLoop::SQR_OUTPUT));
-        addOutput(Port::create<kHzPort>(Vec(47, 318), Port::OUTPUT, module, PalmLoop::TRI_OUTPUT));
-        addOutput(Port::create<kHzPort>(Vec(84, 318), Port::OUTPUT, module, PalmLoop::SUB_OUTPUT));
+        addOutput(createPort<kHzPort>(Vec(10, 318), PortWidget::OUTPUT, module, PalmLoop::SQR_OUTPUT));
+        addOutput(createPort<kHzPort>(Vec(47, 318), PortWidget::OUTPUT, module, PalmLoop::TRI_OUTPUT));
+        addOutput(createPort<kHzPort>(Vec(84, 318), PortWidget::OUTPUT, module, PalmLoop::SUB_OUTPUT));
         
 	}
 };
@@ -227,7 +226,7 @@ struct PalmLoopWidget : ModuleWidget {
 // author name for categorization per plugin, module slug (should never
 // change), human-readable module name, and any number of tags
 // (found in `include/tags.hpp`) separated by commas.
-Model *modelPalmLoop = Model::create<PalmLoop, PalmLoopWidget>("21kHz", "kHzPalmLoop", "Palm Loop — basic VCO — 8hp", OSCILLATOR_TAG);
+Model *modelPalmLoop = createModel<PalmLoop, PalmLoopWidget>("PalmLoop");
 
 // history
 // 0.6.0

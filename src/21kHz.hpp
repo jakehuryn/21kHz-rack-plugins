@@ -1,10 +1,10 @@
-#include "rack.hpp"
+#include "rack0.hpp"
 
 
 using namespace rack;
 
 // Forward-declare the Plugin, defined in Template.cpp
-extern Plugin *plugin;
+extern Plugin *pluginInstance;
 
 // Forward-declare each Model, defined in each module source file
 extern Model *modelPalmLoop;
@@ -17,21 +17,21 @@ extern Model *modelTachyonEntangler;
 
 struct kHzKnob : RoundKnob {
     kHzKnob() {
-        setSVG(SVG::load(assetPlugin(plugin, "res/Components/kHzKnob.svg")));
+        setSVG(SVG::load(assetPlugin(pluginInstance, "res/Components/kHzKnob.svg")));
         shadow->box.pos = Vec(0.0, 2.5);
     }
 };
 
 struct kHzKnobSmall : RoundKnob {
     kHzKnobSmall() {
-        setSVG(SVG::load(assetPlugin(plugin, "res/Components/kHzKnobSmall.svg")));
+        setSVG(SVG::load(assetPlugin(pluginInstance, "res/Components/kHzKnobSmall.svg")));
         shadow->box.pos = Vec(0.0, 2.5);
     }
 };
 
 struct kHzKnobTiny : RoundKnob {
     kHzKnobTiny() {
-        setSVG(SVG::load(assetPlugin(plugin, "res/Components/kHzKnobTiny.svg")));
+        setSVG(SVG::load(assetPlugin(pluginInstance, "res/Components/kHzKnobTiny.svg")));
         shadow->box.pos = Vec(0.0, 2.5);
     }
 };
@@ -50,10 +50,10 @@ struct kHzKnobSmallSnap : kHzKnobSmall {
 
 // Buttons
 
-struct kHzButton : SVGSwitch, ToggleSwitch {
+struct kHzButton : SVGSwitch {
     kHzButton() {
-        addFrame(SVG::load(assetPlugin(plugin, "res/Components/kHzButton_0.svg")));
-        addFrame(SVG::load(assetPlugin(plugin, "res/Components/kHzButton_1.svg")));
+        addFrame(SVG::load(assetPlugin(pluginInstance, "res/Components/kHzButton_0.svg")));
+        addFrame(SVG::load(assetPlugin(pluginInstance, "res/Components/kHzButton_1.svg")));
     }
 };
         
@@ -61,7 +61,7 @@ struct kHzButton : SVGSwitch, ToggleSwitch {
 
 struct kHzPort : SVGPort {
     kHzPort() {
-        setSVG(SVG::load(assetPlugin(plugin, "res/Components/kHzPort.svg")));
+        setSVG(SVG::load(assetPlugin(pluginInstance, "res/Components/kHzPort.svg")));
         shadow->box.pos = Vec(0.0, 1.5);
     }
 };
@@ -70,6 +70,6 @@ struct kHzPort : SVGPort {
 
 struct kHzScrew : SVGScrew {
     kHzScrew() {
-        sw->setSVG(SVG::load(assetPlugin(plugin, "res/Components/kHzScrew.svg")));
+        sw->setSVG(SVG::load(assetPlugin(pluginInstance, "res/Components/kHzScrew.svg")));
     }
 };
