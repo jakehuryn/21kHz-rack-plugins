@@ -72,7 +72,7 @@ void PalmLoop::onSampleRateChange() {
 // each sample in the buffer. the output is the oldest buffer sample, which gets overwritten in the following step.
 
 void PalmLoop::process(const ProcessArgs &args) {
-    if (resetTrigger.process(inputs[RESET_INPUT].value)) {
+    if (resetTrigger.process(inputs[RESET_INPUT].getVoltage())) {
         phase = 0.0f;
     }
     
@@ -82,15 +82,15 @@ void PalmLoop::process(const ProcessArgs &args) {
         triBuffer[i] = triBuffer[i + 1];
     }
     
-    float freq = params[OCT_PARAM].value + 0.031360 + 0.083333 * params[COARSE_PARAM].value + params[FINE_PARAM].value + inputs[V_OCT_INPUT].value;
-    freq += params[EXP_FM_PARAM].value * inputs[EXP_FM_INPUT].value;
+    float freq = params[OCT_PARAM].getValue() + 0.031360 + 0.083333 * params[COARSE_PARAM].getValue() + params[FINE_PARAM].getValue() + inputs[V_OCT_INPUT].getVoltage();
+    freq += params[EXP_FM_PARAM].getValue() * inputs[EXP_FM_INPUT].getVoltage();
     if (freq >= log2sampleFreq) {
         freq = log2sampleFreq;
     }
     freq = powf(2.0f, freq);
     float incr = 0.0f;
-    if (inputs[LIN_FM_INPUT].active) {
-        freq += params[LIN_FM_PARAM].value * params[LIN_FM_PARAM].value * params[LIN_FM_PARAM].value * inputs[LIN_FM_INPUT].value;
+    if (inputs[LIN_FM_INPUT].isConnected()) {
+        freq += params[LIN_FM_PARAM].getValue() * params[LIN_FM_PARAM].getValue() * params[LIN_FM_PARAM].getValue() * inputs[LIN_FM_INPUT].getVoltage();
         incr = args.sampleTime * freq;
         if (incr > 1.0f) {
             incr = 1.0f;
@@ -127,16 +127,16 @@ void PalmLoop::process(const ProcessArgs &args) {
         triBuffer[3] = 1.0f - phase;
     }
     
-    if (outputs[SAW_OUTPUT].active) {
+    if (outputs[SAW_OUTPUT].isConnected()) {
         if (oldDiscont == 1) {
             polyblep4(sawBuffer, 1.0f - oldPhase / incr, 1.0f);
         }
         else if (oldDiscont == -1) {
             polyblep4(sawBuffer, 1.0f - (oldPhase - 1.0f) / incr, -1.0f);
         }
-        outputs[SAW_OUTPUT].value = clamp(10.0f * (sawBuffer[0] - 0.5f), -5.0f, 5.0f);
+        outputs[SAW_OUTPUT].setVoltage(clamp(10.0f * (sawBuffer[0] - 0.5f), -5.0f, 5.0f));
     }
-    if (outputs[SQR_OUTPUT].active) {
+    if (outputs[SQR_OUTPUT].isConnected()) {
         if (discont == 0) {
             if (oldDiscont == 1) {
                 polyblep4(sqrBuffer, 1.0f - oldPhase / incr, -2.0f * square);
@@ -153,9 +153,9 @@ void PalmLoop::process(const ProcessArgs &args) {
                 polyblep4(sqrBuffer, 1.0f - (oldPhase - 1.0f) / incr, 2.0f * square);
             }
         }
-        outputs[SQR_OUTPUT].value = clamp(4.9999f * sqrBuffer[0], -5.0f, 5.0f);
+        outputs[SQR_OUTPUT].setVoltage(clamp(4.9999f * sqrBuffer[0], -5.0f, 5.0f));
     }
-    if (outputs[TRI_OUTPUT].active) {
+    if (outputs[TRI_OUTPUT].isConnected()) {
         if (discont == 0) {
             if (oldDiscont == 1) {
                 polyblamp4(triBuffer, 1.0f - oldPhase / incr, 2.0f * square * incr);
@@ -172,17 +172,17 @@ void PalmLoop::process(const ProcessArgs &args) {
                 polyblamp4(triBuffer, 1.0f - (oldPhase - 1.0f) / incr, -2.0f * square * incr);
             }
         }
-        outputs[TRI_OUTPUT].value = clamp(10.0f * (triBuffer[0] - 0.5f), -5.0f, 5.0f);
+        outputs[TRI_OUTPUT].setVoltage(clamp(10.0f * (triBuffer[0] - 0.5f), -5.0f, 5.0f));
     }
-    if (outputs[SIN_OUTPUT].active) {
-        outputs[SIN_OUTPUT].value = 5.0f * sin_01(phase);
+    if (outputs[SIN_OUTPUT].isConnected()) {
+        outputs[SIN_OUTPUT].setVoltage(5.0f * sin_01(phase));
     }
-    if (outputs[SUB_OUTPUT].active) {
+    if (outputs[SUB_OUTPUT].isConnected()) {
         if (square >= 0.0f) {
-            outputs[SUB_OUTPUT].value = 5.0f * sin_01(0.5f * phase);
+            outputs[SUB_OUTPUT].setVoltage(5.0f * sin_01(0.5f * phase));
         }
         else {
-            outputs[SUB_OUTPUT].value = 5.0f * sin_01(0.5f * (1.0f - phase));
+            outputs[SUB_OUTPUT].setVoltage(5.0f * sin_01(0.5f * (1.0f - phase)));
         }
     }
     

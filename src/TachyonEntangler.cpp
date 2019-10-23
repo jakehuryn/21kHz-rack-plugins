@@ -141,11 +141,11 @@ void TachyonEntangler::onSampleRateChange() {
 
 
 void TachyonEntangler::process(const ProcessArgs &args) {
-    if (resetTriggerA.process(inputs[A_RESET_INPUT].value)) {
+    if (resetTriggerA.process(inputs[A_RESET_INPUT].getVoltage())) {
         phaseA = 0.0f;
         squareA = 1.0f;
     }
-    if (resetTriggerB.process(inputs[B_RESET_INPUT].value)) {
+    if (resetTriggerB.process(inputs[B_RESET_INPUT].getVoltage())) {
         phaseB = 0.0f;
         squareB = 1.0f;
     }
@@ -164,17 +164,17 @@ void TachyonEntangler::process(const ProcessArgs &args) {
     }
     
     float sampleTime = args.sampleTime;
-    float centerPitch = params[A_OCTAVE_PARAM].value + 0.031360 + 0.083333 * params[A_COARSE_PARAM].value + params[A_FINE_PARAM].value;
-    float pitchA = centerPitch + inputs[A_V_OCT_INPUT].value;
-    if (inputs[A_EXP_FM_INPUT].active) {
-        pitchA += 0.2 * inputs[A_EXP_FM_INPUT].value * params[A_EXP_FM_PARAM].value * params[A_EXP_FM_PARAM].value * params[A_EXP_FM_PARAM].value;
+    float centerPitch = params[A_OCTAVE_PARAM].getValue() + 0.031360 + 0.083333 * params[A_COARSE_PARAM].getValue() + params[A_FINE_PARAM].getValue();
+    float pitchA = centerPitch + inputs[A_V_OCT_INPUT].getVoltage();
+    if (inputs[A_EXP_FM_INPUT].isConnected()) {
+        pitchA += 0.2 * inputs[A_EXP_FM_INPUT].getVoltage() * params[A_EXP_FM_PARAM].getValue() * params[A_EXP_FM_PARAM].getValue() * params[A_EXP_FM_PARAM].getValue();
     }
     if (pitchA >= log2sampleFreq) {
         pitchA = log2sampleFreq;
     }
     float incrA = 0.0f;
-    if (inputs[A_LIN_FM_INPUT].active) {
-        incrA = sampleTime * (powf(2.0f, pitchA) + params[A_LIN_FM_PARAM].value * params[A_LIN_FM_PARAM].value * params[A_LIN_FM_PARAM].value * inputs[A_LIN_FM_INPUT].value);
+    if (inputs[A_LIN_FM_INPUT].isConnected()) {
+        incrA = sampleTime * (powf(2.0f, pitchA) + params[A_LIN_FM_PARAM].getValue() * params[A_LIN_FM_PARAM].getValue() * params[A_LIN_FM_PARAM].getValue() * inputs[A_LIN_FM_INPUT].getVoltage());
         if (incrA > 1.0f) {
             incrA = 1.0f;
         }
@@ -185,22 +185,22 @@ void TachyonEntangler::process(const ProcessArgs &args) {
     else {
         incrA = sampleTime * powf(2.0f, pitchA);
     }
-    float pitchB = params[B_RATIO_PARAM].value;
-    if (inputs[B_V_OCT_INPUT].active) {
-        pitchB += centerPitch + inputs[B_V_OCT_INPUT].value;
+    float pitchB = params[B_RATIO_PARAM].getValue();
+    if (inputs[B_V_OCT_INPUT].isConnected()) {
+        pitchB += centerPitch + inputs[B_V_OCT_INPUT].getVoltage();
     }
     else {
         pitchB += pitchA;
     }
-    if (inputs[B_EXP_FM_INPUT].active) {
-        pitchB += 0.2 * inputs[B_EXP_FM_INPUT].value * params[B_EXP_FM_PARAM].value * params[B_EXP_FM_PARAM].value * params[B_EXP_FM_PARAM].value;
+    if (inputs[B_EXP_FM_INPUT].isConnected()) {
+        pitchB += 0.2 * inputs[B_EXP_FM_INPUT].getVoltage() * params[B_EXP_FM_PARAM].getValue() * params[B_EXP_FM_PARAM].getValue() * params[B_EXP_FM_PARAM].getValue();
     }
     if (pitchB >= log2sampleFreq) {
         pitchB = log2sampleFreq;
     }
     float incrB = 0.0f;
-    if (inputs[B_LIN_FM_INPUT].active) {
-        incrB = sampleTime * (powf(2.0f, pitchB) + params[B_LIN_FM_PARAM].value * params[B_LIN_FM_PARAM].value * params[B_LIN_FM_PARAM].value * inputs[B_LIN_FM_INPUT].value);
+    if (inputs[B_LIN_FM_INPUT].isConnected()) {
+        incrB = sampleTime * (powf(2.0f, pitchB) + params[B_LIN_FM_PARAM].getValue() * params[B_LIN_FM_PARAM].getValue() * params[B_LIN_FM_PARAM].getValue() * inputs[B_LIN_FM_INPUT].getVoltage());
         if (incrB > 1.0f) {
             incrB = 1.0f;
         }
@@ -212,20 +212,20 @@ void TachyonEntangler::process(const ProcessArgs &args) {
         incrB = sampleTime * powf(2.0f, pitchB);
     }
     
-    float decrA = advancePhase(phaseA, squareA, incrA, params[A_CHAOS_PARAM].value + params[A_CHAOS_MOD_PARAM].value * inputs[A_CHAOS_INPUT].value, discontA);
+    float decrA = advancePhase(phaseA, squareA, incrA, params[A_CHAOS_PARAM].getValue() + params[A_CHAOS_MOD_PARAM].getValue() * inputs[A_CHAOS_INPUT].getVoltage(), discontA);
     float decrB = 1.0f;
-    if ((discontA == 1 || discontA == -1) && random::uniform() >= 1.0f - (params[B_SYNC_PROB_PARAM].value + params[B_SYNC_PROB_MOD_PARAM].value * inputs[B_SYNC_PROB_INPUT].value)) {
+    if ((discontA == 1 || discontA == -1) && random::uniform() >= 1.0f - (params[B_SYNC_PROB_PARAM].getValue() + params[B_SYNC_PROB_MOD_PARAM].getValue() * inputs[B_SYNC_PROB_INPUT].getVoltage())) {
         syncDiscontA = discontA;
     }
     else {
         syncDiscontA = 0;
     }
     if (syncDiscontA == 0) {
-        decrB = advancePhase(phaseB, squareB, incrB, params[B_CHAOS_PARAM].value + params[B_CHAOS_MOD_PARAM].value * inputs[B_CHAOS_INPUT].value, discontB);
+        decrB = advancePhase(phaseB, squareB, incrB, params[B_CHAOS_PARAM].getValue() + params[B_CHAOS_MOD_PARAM].getValue() * inputs[B_CHAOS_INPUT].getVoltage(), discontB);
     }
     else {
-        decrB = advancePhase(phaseB, squareB, incrB, params[B_CHAOS_PARAM].value + params[B_CHAOS_MOD_PARAM].value * inputs[B_CHAOS_INPUT].value, discontB);
-        if (outputs[B_SAW_OUTPUT].active || outputs[B_SQR_OUTPUT].active) {
+        decrB = advancePhase(phaseB, squareB, incrB, params[B_CHAOS_PARAM].getValue() + params[B_CHAOS_MOD_PARAM].getValue() * inputs[B_CHAOS_INPUT].getVoltage(), discontB);
+        if (outputs[B_SAW_OUTPUT].isConnected() || outputs[B_SQR_OUTPUT].isConnected()) {
             if (discontB == 0) {
             }
             if (discontB == 1) {
@@ -267,14 +267,14 @@ void TachyonEntangler::process(const ProcessArgs &args) {
             ++phaseB;
         }
     }
-    if ((discontB == 1 || discontB == -1) && random::uniform() >= 1.0f - (params[A_SYNC_PROB_PARAM].value + params[A_SYNC_PROB_MOD_PARAM].value * inputs[A_SYNC_PROB_INPUT].value)) {
+    if ((discontB == 1 || discontB == -1) && random::uniform() >= 1.0f - (params[A_SYNC_PROB_PARAM].getValue() + params[A_SYNC_PROB_MOD_PARAM].getValue() * inputs[A_SYNC_PROB_INPUT].getVoltage())) {
         syncDiscontB = discontB;
     }
     else {
         syncDiscontB = 0;
     }
     if (syncDiscontB == 1 || syncDiscontB == -1) {
-        if (outputs[A_SAW_OUTPUT].active || outputs[A_SQR_OUTPUT].active) {
+        if (outputs[A_SAW_OUTPUT].isConnected() || outputs[A_SQR_OUTPUT].isConnected()) {
             if (discontA == 0) {
             }
             if (discontA == 1) {
@@ -325,7 +325,7 @@ void TachyonEntangler::process(const ProcessArgs &args) {
     oldIncrsA[2] = incrA;
     oldIncrsB[2] = incrB;
     
-    if (outputs[A_SAW_OUTPUT].active || outputs[A_SQR_OUTPUT].active) {
+    if (outputs[A_SAW_OUTPUT].isConnected() || outputs[A_SQR_OUTPUT].isConnected()) {
         if (oldSyncDiscontB == 0) {
             if (oldDiscontA == 0) {
             }
@@ -391,10 +391,10 @@ void TachyonEntangler::process(const ProcessArgs &args) {
                 }
             }
         }
-        outputs[A_SAW_OUTPUT].value = clamp(10.0f * ((sawBufferA[0] + params[A_CHAOS_PARAM].value) / (1.0f + params[A_CHAOS_PARAM].value) - 0.5f), -5.0f, 5.0f);
-        outputs[A_SQR_OUTPUT].value = clamp(5.0f * sqrBufferA[0], -5.0f, 5.0f);
+        outputs[A_SAW_OUTPUT].setVoltage(clamp(10.0f * ((sawBufferA[0] + params[A_CHAOS_PARAM].getValue()) / (1.0f + params[A_CHAOS_PARAM].getValue()) - 0.5f), -5.0f, 5.0f));
+        outputs[A_SQR_OUTPUT].setVoltage(clamp(5.0f * sqrBufferA[0], -5.0f, 5.0f));
     }
-    if (outputs[B_SAW_OUTPUT].active || outputs[B_SQR_OUTPUT].active) {
+    if (outputs[B_SAW_OUTPUT].isConnected() || outputs[B_SQR_OUTPUT].isConnected()) {
         if (oldSyncDiscontA == 0) {
             if (oldDiscontB == 0) {
             }
@@ -460,8 +460,8 @@ void TachyonEntangler::process(const ProcessArgs &args) {
                 }
             }
         }
-        outputs[B_SAW_OUTPUT].value = clamp(10.0f * ((sawBufferB[0] + params[B_CHAOS_PARAM].value) / (1.0f + params[B_CHAOS_PARAM].value) - 0.5f), -5.0f, 5.0f);
-        outputs[B_SQR_OUTPUT].value = clamp(5.0f * sqrBufferB[0], -5.0f, 5.0f);
+        outputs[B_SAW_OUTPUT].setVoltage(clamp(10.0f * ((sawBufferB[0] + params[B_CHAOS_PARAM].getValue()) / (1.0f + params[B_CHAOS_PARAM].getValue()) - 0.5f), -5.0f, 5.0f));
+        outputs[B_SQR_OUTPUT].setVoltage(clamp(5.0f * sqrBufferB[0], -5.0f, 5.0f));
     }
     
     oldDecrA = decrA;

@@ -53,22 +53,22 @@ void newState(bool &state, bool inactive, bool triggered) {
 
 
 void D_Inf::process(const ProcessArgs &args) {
-    if (params[INVERT_PARAM].value == 0) {
+    if (params[INVERT_PARAM].getValue() == 0) {
         invert = false;
     }
     else {
-        newState(invert, !inputs[INVERT_INPUT].active, invertTrigger.process(inputs[INVERT_INPUT].value));
+        newState(invert, !inputs[INVERT_INPUT].isConnected(), invertTrigger.process(inputs[INVERT_INPUT].getVoltage()));
     }
-    newState(transpose, !inputs[TRANSPOSE_INPUT].active, transposeTrigger.process(inputs[TRANSPOSE_INPUT].value));
+    newState(transpose, !inputs[TRANSPOSE_INPUT].isConnected(), transposeTrigger.process(inputs[TRANSPOSE_INPUT].getVoltage()));
     
-    float output = inputs[A_INPUT].value;
+    float output = inputs[A_INPUT].getVoltage();
     if (invert) {
         output *= -1.0f;
     }
     if (transpose) {
-        output += params[OCTAVE_PARAM].value + 0.083333 * params[COARSE_PARAM].value + 0.041667 * params[HALF_SHARP_PARAM].value;
+        output += params[OCTAVE_PARAM].getValue() + 0.083333 * params[COARSE_PARAM].getValue() + 0.041667 * params[HALF_SHARP_PARAM].getValue();
     }
-    outputs[A_OUTPUT].value = output;
+    outputs[A_OUTPUT].setVoltage(output);
 }
 
 
