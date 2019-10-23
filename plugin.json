@@ -14,7 +14,7 @@
   "changelogUrl": "",
   "modules": [
     {
-      "slug": "PalmLoop",
+      "slug": "kHzPalmLoop",
       "name": "PalmLoop",
       "description": "Palm Loop — basic VCO — 8hp",
       "tags": [
@@ -22,7 +22,7 @@
       ]
     },
     {
-      "slug": "TachyonEntangler",
+      "slug": "kHzTachyonEntangler",
       "name": "TachyonEntangler",
       "description": "Tachyon Entangler — chaotic sync VCO — 20hp",
       "tags": [
@@ -30,7 +30,7 @@
       ]
     },
     {
-      "slug": "D_Inf",
+      "slug": "kHzD_Inf",
       "name": "D\u221e",
       "description": "D\u221e \u2014 pitch tools \u2014 4hp",
       "tags": [

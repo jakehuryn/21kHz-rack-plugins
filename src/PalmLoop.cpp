@@ -31,19 +31,19 @@ struct PalmLoop : Module {
 	enum LightIds {
 		NUM_LIGHTS
 	};
-    
+
     float phase = 0.0f;
     float oldPhase = 0.0f;
     float square = 1.0f;
     int discont = 0;
     int oldDiscont = 0;
-    
+
     array<float, 4> sawBuffer;
     array<float, 4> sqrBuffer;
     array<float, 4> triBuffer;
-    
+
     float log2sampleFreq = 15.4284f;
-    
+
     dsp::SchmittTrigger resetTrigger;
 
 	PalmLoop() {
@@ -75,13 +75,13 @@ void PalmLoop::process(const ProcessArgs &args) {
     if (resetTrigger.process(inputs[RESET_INPUT].getVoltage())) {
         phase = 0.0f;
     }
-    
+
     for (int i = 0; i <= 2; ++i) {
         sawBuffer[i] = sawBuffer[i + 1];
         sqrBuffer[i] = sqrBuffer[i + 1];
         triBuffer[i] = triBuffer[i + 1];
     }
-    
+
     float freq = params[OCT_PARAM].getValue() + 0.031360 + 0.083333 * params[COARSE_PARAM].getValue() + params[FINE_PARAM].getValue() + inputs[V_OCT_INPUT].getVoltage();
     freq += params[EXP_FM_PARAM].getValue() * inputs[EXP_FM_INPUT].getVoltage();
     if (freq >= log2sampleFreq) {
@@ -102,7 +102,7 @@ void PalmLoop::process(const ProcessArgs &args) {
     else {
         incr = args.sampleTime * freq;
     }
-    
+
     phase += incr;
     if (phase >= 0.0f && phase < 1.0f) {
         discont = 0;
@@ -117,7 +117,7 @@ void PalmLoop::process(const ProcessArgs &args) {
         ++phase;
         square *= -1.0f;
     }
-    
+
     sawBuffer[3] = phase;
     sqrBuffer[3] = square;
     if (square >= 0.0f) {
@@ -126,7 +126,7 @@ void PalmLoop::process(const ProcessArgs &args) {
     else {
         triBuffer[3] = 1.0f - phase;
     }
-    
+
     if (outputs[SAW_OUTPUT].isConnected()) {
         if (oldDiscont == 1) {
             polyblep4(sawBuffer, 1.0f - oldPhase / incr, 1.0f);
@@ -185,7 +185,7 @@ void PalmLoop::process(const ProcessArgs &args) {
             outputs[SUB_OUTPUT].setVoltage(5.0f * sin_01(0.5f * (1.0f - phase)));
         }
     }
-    
+
     oldPhase = phase;
     oldDiscont = discont;
 }
@@ -202,27 +202,26 @@ struct PalmLoopWidget : ModuleWidget {
     addChild(createWidget<kHzScrew>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 
     addParam(createParam<kHzKnobSnap>(Vec(36, 40), module, PalmLoop::OCT_PARAM));
-        
+
     addParam(createParam<kHzKnobSmallSnap>(Vec(16, 112), module, PalmLoop::COARSE_PARAM));
     addParam(createParam<kHzKnobSmall>(Vec(72, 112), module, PalmLoop::FINE_PARAM));
-       
+
     addParam(createParam<kHzKnobSmall>(Vec(16, 168), module, PalmLoop::EXP_FM_PARAM));
     addParam(createParam<kHzKnobSmall>(Vec(72, 168), module, PalmLoop::LIN_FM_PARAM));
-        
+
     addInput(createInput<kHzPort>(Vec(10, 234), module, PalmLoop::EXP_FM_INPUT));
     addInput(createInput<kHzPort>(Vec(47, 234), module, PalmLoop::V_OCT_INPUT));
     addInput(createInput<kHzPort>(Vec(84, 234), module, PalmLoop::LIN_FM_INPUT));
-      
+
     addInput(createInput<kHzPort>(Vec(10, 276), module, PalmLoop::RESET_INPUT));
     addOutput(createOutput<kHzPort>(Vec(47, 276), module, PalmLoop::SAW_OUTPUT));
     addOutput(createOutput<kHzPort>(Vec(84, 276), module, PalmLoop::SIN_OUTPUT));
-        
+
     addOutput(createOutput<kHzPort>(Vec(10, 318), module, PalmLoop::SQR_OUTPUT));
     addOutput(createOutput<kHzPort>(Vec(47, 318), module, PalmLoop::TRI_OUTPUT));
     addOutput(createOutput<kHzPort>(Vec(84, 318), module, PalmLoop::SUB_OUTPUT));
-        
+
 	}
 };
 
-Model *modelPalmLoop = createModel<PalmLoop, PalmLoopWidget>("PalmLoop");
-
+Model *modelPalmLoop = createModel<PalmLoop, PalmLoopWidget>("kHzPalmLoop");

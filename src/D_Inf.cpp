@@ -21,10 +21,10 @@ struct D_Inf : Module {
 	enum LightIds {
 		NUM_LIGHTS
 	};
-    
+
     bool invert = true;
     bool transpose = true;
-    
+
     dsp::SchmittTrigger invertTrigger;
     dsp::SchmittTrigger transposeTrigger;
 
@@ -60,7 +60,7 @@ void D_Inf::process(const ProcessArgs &args) {
         newState(invert, !inputs[INVERT_INPUT].isConnected(), invertTrigger.process(inputs[INVERT_INPUT].getVoltage()));
     }
     newState(transpose, !inputs[TRANSPOSE_INPUT].isConnected(), transposeTrigger.process(inputs[TRANSPOSE_INPUT].getVoltage()));
-    
+
     float output = inputs[A_INPUT].getVoltage();
     if (invert) {
         output *= -1.0f;
@@ -79,13 +79,13 @@ struct D_InfWidget : ModuleWidget {
 
     addChild(createWidget<kHzScrew>(Vec(RACK_GRID_WIDTH, 0)));
     addChild(createWidget<kHzScrew>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
-        
+
     addParam(createParam<kHzKnobSmallSnap>(Vec(14, 40), module, D_Inf::OCTAVE_PARAM));
     addParam(createParam<kHzKnobSmallSnap>(Vec(14, 96), module, D_Inf::COARSE_PARAM));
-       
+
     addParam(createParam<kHzButton>(Vec(10, 150), module, D_Inf::HALF_SHARP_PARAM));
     addParam(createParam<kHzButton>(Vec(36, 150), module, D_Inf::INVERT_PARAM));
-        
+
     addInput(createInput<kHzPort>(Vec(17, 192), module, D_Inf::INVERT_INPUT));
     addInput(createInput<kHzPort>(Vec(17, 234), module, D_Inf::TRANSPOSE_INPUT));
     addInput(createInput<kHzPort>(Vec(17, 276), module, D_Inf::A_INPUT));
@@ -93,5 +93,4 @@ struct D_InfWidget : ModuleWidget {
 	}
 };
 
-Model *modelD_Inf = createModel<D_Inf, D_InfWidget>("D_Inf");
-
+Model *modelD_Inf = createModel<D_Inf, D_InfWidget>("kHzD_Inf");
