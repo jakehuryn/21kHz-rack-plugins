@@ -47,16 +47,16 @@ struct kHzKnobSmallSnap : kHzKnobSmall {
 
 // Buttons
 
-struct kHzButton : SVGSwitch {
+struct kHzButton : SvgSwitch {
     kHzButton() {
         addFrame(APP->window->loadSvg(asset::plugin(pluginInstance, "res/Components/kHzButton_0.svg")));
         addFrame(APP->window->loadSvg(asset::plugin(pluginInstance, "res/Components/kHzButton_1.svg")));
     }
 };
-        
+
 // Ports
 
-struct kHzPort : SVGPort {
+struct kHzPort : SvgPort {
     kHzPort() {
         setSvg(APP->window->loadSvg(asset::plugin(pluginInstance, "res/Components/kHzPort.svg")));
         shadow->box.pos = Vec(0.0, 1.5);
@@ -65,7 +65,7 @@ struct kHzPort : SVGPort {
 
 // Misc
 
-struct kHzScrew : SVGScrew {
+struct kHzScrew : SvgScrew {
     kHzScrew() {
         sw->setSvg(APP->window->loadSvg(asset::plugin(pluginInstance, "res/Components/kHzScrew.svg")));
     }
